@@ -35,8 +35,8 @@ dependencies = [
 [project.urls]
 Homepage = "https://linkup.so"
 Documentation = "https://docs.linkup.so"
-Repository = "https://github.com/shauryajain21/linkup-cli"
-Issues = "https://github.com/shauryajain21/linkup-cli/issues"
+Repository = "https://github.com/LinkupPlatform/linkup-cli"
+Issues = "https://github.com/LinkupPlatform/linkup-cli/issues"
 
 [project.scripts]
 linkup = "linkup_cli.cli:main"
