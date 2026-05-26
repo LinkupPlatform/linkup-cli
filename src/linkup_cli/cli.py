@@ -13,7 +13,7 @@ except PackageNotFoundError:
 
 # Valid options
 VALID_DEPTHS = ["fast", "standard", "deep"]
-VALID_OUTPUT_TYPES = ["sourcedAnswer", "searchResults"]
+VALID_OUTPUT_TYPES = ["sourcedAnswer", "searchResults", "structured"]
 
 # Config paths
 CONFIG_DIR = Path.home() / ".linkup"
@@ -164,6 +164,32 @@ def cmd_search(args):
         console.print("[dim]  linkup search                    # interactive mode[/dim]")
         sys.exit(1)
 
+    # Resolve schema for structured output
+    schema = None
+    if args.output == "structured":
+        if args.schema_file:
+            try:
+                schema = Path(args.schema_file).read_text()
+            except Exception as e:
+                console.print(f"[red]Error reading schema file: {e}[/red]")
+                sys.exit(1)
+        elif args.schema:
+            schema = args.schema
+        else:
+            console.print("[red]Error: --output structured requires --schema-file or --schema[/red]")
+            console.print("[dim]Example: linkup search \"...\" -o structured --schema-file schema.json[/dim]")
+            sys.exit(1)
+
+        # Validate JSON before sending
+        import json
+        try:
+            json.loads(schema)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]Error: schema is not valid JSON: {e}[/red]")
+            sys.exit(1)
+    elif args.schema_file or args.schema:
+        console.print("[yellow]Warning: --schema/--schema-file ignored (only used with -o structured)[/yellow]")
+
     console.print(f"[dim]Depth: {args.depth} | Output: {args.output}[/dim]")
 
     try:
@@ -172,6 +198,7 @@ def cmd_search(args):
                 query=query,
                 depth=args.depth,
                 output_type=args.output,
+                structured_output_schema=schema,
             )
     except Exception as e:
         error_str = str(e).lower()
@@ -190,14 +217,26 @@ def cmd_search(args):
         sys.exit(1)
 
     if args.output == "searchResults":
-        # Display search results
         for i, result in enumerate(response.results, 1):
             console.print(f"\n[bold cyan]{i}. {result.name}[/bold cyan]")
             console.print(f"   [dim]{result.url}[/dim]")
             if result.content:
                 console.print(f"   {result.content}")
+    elif args.output == "structured":
+        import json
+        from rich.syntax import Syntax
+
+        if hasattr(response, "model_dump"):
+            data = response.model_dump()
+        elif isinstance(response, dict):
+            data = response
+        else:
+            data = response
+
+        rendered = json.dumps(data, indent=2, default=str, ensure_ascii=False)
+        console.print()
+        console.print(Syntax(rendered, "json", theme="monokai", background_color="default"))
     else:
-        # Display sourced answer
         console.print()
         console.print(Markdown(response.answer))
 
@@ -372,6 +411,7 @@ Examples:
   linkup setup                              # First-time setup
   linkup search "What is the capital of France?"
   linkup search "Latest AI news" --depth deep
+  linkup search "iPhone 16 specs" -o structured --schema-file schema.json
   linkup search --clipboard                 # Search using clipboard content
   linkup search --file prompt.txt           # Search using file content
   linkup search                             # Interactive mode (paste + Ctrl+D)
@@ -403,7 +443,17 @@ Documentation: https://docs.linkup.so
         "--output", "-o",
         choices=VALID_OUTPUT_TYPES,
         default="sourcedAnswer",
-        help="Output type: sourcedAnswer (AI summary) or searchResults (raw results). Default: sourcedAnswer"
+        help="Output type: sourcedAnswer (AI summary), searchResults (raw results), or structured (JSON matching --schema). Default: sourcedAnswer"
+    )
+    search_parser.add_argument(
+        "--schema-file",
+        metavar="FILE",
+        help="Path to a JSON schema file (required with -o structured)"
+    )
+    search_parser.add_argument(
+        "--schema",
+        metavar="JSON",
+        help="Inline JSON schema string (required with -o structured if --schema-file not used)"
     )
     search_parser.add_argument(
         "--clipboard", "-c",
