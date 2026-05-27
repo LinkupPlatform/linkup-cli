@@ -3,11 +3,17 @@
 import argparse
 import os
 import sys
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
 from pathlib import Path
+
+try:
+    __version__ = _pkg_version("linkup-cli")
+except PackageNotFoundError:
+    __version__ = "0.0.0+local"
 
 # Valid options
 VALID_DEPTHS = ["fast", "standard", "deep"]
-VALID_OUTPUT_TYPES = ["sourcedAnswer", "searchResults"]
+VALID_OUTPUT_TYPES = ["sourcedAnswer", "searchResults", "structured"]
 
 # Config paths
 CONFIG_DIR = Path.home() / ".linkup"
@@ -56,29 +62,41 @@ def get_client():
 
 
 def read_from_clipboard():
-    """Read text from system clipboard."""
+    """Read text from system clipboard. Returns (text, error_message)."""
     import subprocess
     import platform
 
     system = platform.system()
-    try:
-        if system == "Darwin":  # macOS
+
+    if system == "Darwin":
+        try:
             result = subprocess.run(["pbpaste"], capture_output=True, text=True)
-            return result.stdout.strip()
-        elif system == "Linux":
-            # Try xclip first, then xsel
+            return result.stdout.strip(), None
+        except FileNotFoundError:
+            return None, "pbpaste not found"
+
+    if system == "Linux":
+        for cmd in (["xclip", "-selection", "clipboard", "-o"],
+                    ["xsel", "--clipboard", "--output"],
+                    ["wl-paste"]):
             try:
-                result = subprocess.run(["xclip", "-selection", "clipboard", "-o"], capture_output=True, text=True)
-                return result.stdout.strip()
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                return result.stdout.strip(), None
             except FileNotFoundError:
-                result = subprocess.run(["xsel", "--clipboard", "--output"], capture_output=True, text=True)
-                return result.stdout.strip()
-        elif system == "Windows":
-            result = subprocess.run(["powershell", "-command", "Get-Clipboard"], capture_output=True, text=True)
-            return result.stdout.strip()
-    except Exception:
-        return None
-    return None
+                continue
+        return None, "No clipboard tool found. Install xclip, xsel, or wl-clipboard."
+
+    if system == "Windows":
+        try:
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-Command", "Get-Clipboard"],
+                capture_output=True, text=True,
+            )
+            return result.stdout.strip(), None
+        except FileNotFoundError:
+            return None, "powershell not found"
+
+    return None, f"Clipboard not supported on {system}"
 
 
 def cmd_search(args):
@@ -93,9 +111,12 @@ def cmd_search(args):
 
     # Priority 1: Read from clipboard if --clipboard flag
     if args.clipboard:
-        query = read_from_clipboard()
+        query, err = read_from_clipboard()
+        if err:
+            console.print(f"[red]Error: {err}[/red]")
+            sys.exit(1)
         if not query:
-            console.print("[red]Error: Could not read from clipboard[/red]")
+            console.print("[red]Error: Clipboard is empty[/red]")
             sys.exit(1)
         console.print(f"[dim]Read {len(query)} characters from clipboard[/dim]")
 
@@ -143,21 +164,41 @@ def cmd_search(args):
         console.print("[dim]  linkup search                    # interactive mode[/dim]")
         sys.exit(1)
 
-    # Determine depth
-    depth = args.depth or "standard"
+    # Resolve schema for structured output
+    schema = None
+    if args.output == "structured":
+        if args.schema_file:
+            try:
+                schema = Path(args.schema_file).read_text()
+            except Exception as e:
+                console.print(f"[red]Error reading schema file: {e}[/red]")
+                sys.exit(1)
+        elif args.schema:
+            schema = args.schema
+        else:
+            console.print("[red]Error: --output structured requires --schema-file or --schema[/red]")
+            console.print("[dim]Example: linkup search \"...\" -o structured --schema-file schema.json[/dim]")
+            sys.exit(1)
 
-    # Determine output type
-    output_type = args.output or "sourcedAnswer"
+        # Validate JSON before sending
+        import json
+        try:
+            json.loads(schema)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]Error: schema is not valid JSON: {e}[/red]")
+            sys.exit(1)
+    elif args.schema_file or args.schema:
+        console.print("[yellow]Warning: --schema/--schema-file ignored (only used with -o structured)[/yellow]")
 
-    # Show search parameters
-    console.print(f"[dim]Depth: {depth} | Output: {output_type}[/dim]")
+    console.print(f"[dim]Depth: {args.depth} | Output: {args.output}[/dim]")
 
     try:
-        with console.status(f"[bold blue]Searching...[/bold blue]"):
+        with console.status("[bold blue]Searching...[/bold blue]"):
             response = client.search(
                 query=query,
-                depth=depth,
-                output_type=output_type,
+                depth=args.depth,
+                output_type=args.output,
+                structured_output_schema=schema,
             )
     except Exception as e:
         error_str = str(e).lower()
@@ -175,15 +216,27 @@ def cmd_search(args):
             console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
 
-    if output_type == "searchResults":
-        # Display search results
+    if args.output == "searchResults":
         for i, result in enumerate(response.results, 1):
             console.print(f"\n[bold cyan]{i}. {result.name}[/bold cyan]")
             console.print(f"   [dim]{result.url}[/dim]")
             if result.content:
                 console.print(f"   {result.content}")
+    elif args.output == "structured":
+        import json
+        from rich.syntax import Syntax
+
+        if hasattr(response, "model_dump"):
+            data = response.model_dump()
+        elif isinstance(response, dict):
+            data = response
+        else:
+            data = response
+
+        rendered = json.dumps(data, indent=2, default=str, ensure_ascii=False)
+        console.print()
+        console.print(Syntax(rendered, "json", theme="monokai", background_color="default"))
     else:
-        # Display sourced answer
         console.print()
         console.print(Markdown(response.answer))
 
@@ -205,7 +258,6 @@ def cmd_fetch(args):
 
     try:
         with console.status(f"[bold blue]Fetching {args.url}...[/bold blue]"):
-            # render_js=True recommended for JS-heavy sites
             response = client.fetch(url=args.url)
 
         console.print()
@@ -359,6 +411,7 @@ Examples:
   linkup setup                              # First-time setup
   linkup search "What is the capital of France?"
   linkup search "Latest AI news" --depth deep
+  linkup search "iPhone 16 specs" -o structured --schema-file schema.json
   linkup search --clipboard                 # Search using clipboard content
   linkup search --file prompt.txt           # Search using file content
   linkup search                             # Interactive mode (paste + Ctrl+D)
@@ -370,7 +423,7 @@ Documentation: https://docs.linkup.so
         """,
     )
     parser.add_argument(
-        "--version", "-V", action="version", version="%(prog)s 0.5.2"
+        "--version", "-V", action="version", version=f"%(prog)s {__version__}"
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -390,7 +443,17 @@ Documentation: https://docs.linkup.so
         "--output", "-o",
         choices=VALID_OUTPUT_TYPES,
         default="sourcedAnswer",
-        help="Output type: sourcedAnswer (AI summary) or searchResults (raw results). Default: sourcedAnswer"
+        help="Output type: sourcedAnswer (AI summary), searchResults (raw results), or structured (JSON matching --schema). Default: sourcedAnswer"
+    )
+    search_parser.add_argument(
+        "--schema-file",
+        metavar="FILE",
+        help="Path to a JSON schema file (required with -o structured)"
+    )
+    search_parser.add_argument(
+        "--schema",
+        metavar="JSON",
+        help="Inline JSON schema string (required with -o structured if --schema-file not used)"
     )
     search_parser.add_argument(
         "--clipboard", "-c",

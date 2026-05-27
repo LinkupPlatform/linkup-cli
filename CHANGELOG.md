@@ -2,6 +2,25 @@
 
 All notable changes to the Linkup CLI are documented in this file.
 
+## [0.6.0] - 2026-05-26
+
+### Added
+- **Structured output** (`-o structured`): Get JSON results matching a custom schema
+  - `--schema-file FILE`: Load JSON schema from a file
+  - `--schema JSON`: Pass inline JSON schema string
+  - Schema is validated as JSON before sending to the API
+  - Response is pretty-printed with syntax highlighting
+
+### Changed
+- Version is now read from package metadata (single source of truth in `pyproject.toml`)
+- Clipboard helper now surfaces specific error messages (e.g., "Install xclip, xsel, or wl-clipboard")
+- Added Wayland `wl-paste` fallback for Linux clipboard reads
+
+### Fixed
+- Repository URLs in `pyproject.toml` now point to `LinkupPlatform/linkup-cli`
+- Removed dead default-fallback code in search command
+- Removed misleading `render_js` comment in fetch command
+
 ## [0.5.2] - 2025-03-26
 
 ### Changed

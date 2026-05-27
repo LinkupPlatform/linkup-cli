@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "linkup-cli"
-version = "0.5.2"
+version = "0.6.0"
 description = "Official CLI for Linkup - AI-powered web search"
 readme = "README.md"
 license = "MIT"
@@ -35,8 +35,8 @@ dependencies = [
 [project.urls]
 Homepage = "https://linkup.so"
 Documentation = "https://docs.linkup.so"
-Repository = "https://github.com/shauryajain21/linkup-cli"
-Issues = "https://github.com/shauryajain21/linkup-cli/issues"
+Repository = "https://github.com/LinkupPlatform/linkup-cli"
+Issues = "https://github.com/LinkupPlatform/linkup-cli/issues"
 
 [project.scripts]
 linkup = "linkup_cli.cli:main"
