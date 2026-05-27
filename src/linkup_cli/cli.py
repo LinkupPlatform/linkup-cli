@@ -14,6 +14,9 @@ except PackageNotFoundError:
 # Valid options
 VALID_DEPTHS = ["fast", "standard", "deep"]
 VALID_OUTPUT_TYPES = ["sourcedAnswer", "searchResults", "structured"]
+VALID_RESEARCH_OUTPUT_TYPES = ["sourcedAnswer", "structured"]
+VALID_REASONING = ["S", "M", "L", "XL"]
+VALID_RESEARCH_MODES = ["answer", "auto", "investigate", "research"]
 
 # Config paths
 CONFIG_DIR = Path.home() / ".linkup"
@@ -248,6 +251,201 @@ def cmd_search(args):
     console.print()
 
 
+def _parse_iso_date(s, name):
+    from datetime import date
+    try:
+        return date.fromisoformat(s)
+    except ValueError:
+        print(f"Error: --{name} must be ISO format (YYYY-MM-DD), got: {s}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _render_research_output(task, console):
+    """Render a completed research task's output."""
+    import json
+    from rich.markdown import Markdown
+    from rich.syntax import Syntax
+
+    output = task.output
+
+    # Structured output: pretty-print JSON
+    if isinstance(output, (dict, list)):
+        rendered = json.dumps(output, indent=2, default=str, ensure_ascii=False)
+        console.print()
+        console.print(Syntax(rendered, "json", theme="monokai", background_color="default"))
+        return
+
+    # Sourced answer object
+    if hasattr(output, "answer"):
+        console.print()
+        console.print(Markdown(output.answer))
+        if hasattr(output, "sources") and output.sources:
+            console.print("\n[bold]Sources:[/bold]")
+            for src in output.sources[:10]:
+                name = getattr(src, "name", getattr(src, "url", "source"))
+                url = getattr(src, "url", "")
+                console.print(f"  [dim]•[/dim] [link={url}]{name}[/link]")
+        return
+
+    # Fallback — dump whatever we got
+    if hasattr(output, "model_dump"):
+        rendered = json.dumps(output.model_dump(), indent=2, default=str, ensure_ascii=False)
+    else:
+        rendered = str(output)
+    console.print()
+    console.print(rendered)
+
+
+def cmd_research(args):
+    """Submit, fetch, or list research tasks."""
+    import time
+    from rich.console import Console
+
+    console = Console()
+    client = get_client()
+
+    # Fetch existing task by ID
+    if args.id:
+        try:
+            task = client.get_research(research_id=args.id)
+        except Exception as e:
+            console.print(f"[red]Error fetching task: {e}[/red]")
+            sys.exit(1)
+        console.print(f"[dim]Task {task.id} — status: {task.status}[/dim]")
+        if task.status == "completed":
+            _render_research_output(task, console)
+        elif task.status == "failed":
+            console.print(f"[red]Task failed: {task.error or 'unknown error'}[/red]")
+            sys.exit(1)
+        else:
+            console.print(f"[yellow]Task is still {task.status}. Try again later.[/yellow]")
+        return
+
+    # List past tasks
+    if args.list:
+        try:
+            page = client.list_research(page_size=20, sort_by="createdAt", sort_direction="desc")
+        except Exception as e:
+            console.print(f"[red]Error listing tasks: {e}[/red]")
+            sys.exit(1)
+        from rich.table import Table
+        table = Table(title="Recent Research Tasks")
+        table.add_column("ID", style="cyan", overflow="fold")
+        table.add_column("Status", style="green")
+        table.add_column("Created", style="dim")
+        table.add_column("Query", overflow="fold")
+        for t in page.data:
+            query = getattr(t.input, "query", "")
+            table.add_row(t.id, t.status, t.created_at, query[:80])
+        console.print()
+        console.print(table)
+        console.print()
+        return
+
+    # Resolve query (same priority as search)
+    query = ""
+    if args.clipboard:
+        text, err = read_from_clipboard()
+        if err:
+            console.print(f"[red]Error: {err}[/red]")
+            sys.exit(1)
+        query = text or ""
+    elif args.file:
+        try:
+            query = Path(args.file).read_text().strip()
+        except Exception as e:
+            console.print(f"[red]Error reading file: {e}[/red]")
+            sys.exit(1)
+    elif args.query:
+        query = " ".join(args.query)
+    elif not sys.stdin.isatty():
+        query = sys.stdin.read().strip()
+
+    if not query:
+        console.print("[red]Error: No query provided[/red]")
+        console.print("[dim]Usage: linkup research \"your question\"[/dim]")
+        sys.exit(1)
+
+    # Resolve schema
+    schema = None
+    if args.output == "structured":
+        if args.schema_file:
+            try:
+                schema = Path(args.schema_file).read_text()
+            except Exception as e:
+                console.print(f"[red]Error reading schema file: {e}[/red]")
+                sys.exit(1)
+        elif args.schema:
+            schema = args.schema
+        else:
+            console.print("[red]Error: --output structured requires --schema-file or --schema[/red]")
+            sys.exit(1)
+        import json
+        try:
+            json.loads(schema)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]Error: schema is not valid JSON: {e}[/red]")
+            sys.exit(1)
+
+    # Parse dates and domains
+    kwargs = {
+        "query": query,
+        "output_type": args.output,
+        "reasoning_depth": args.reasoning,
+        "mode": args.mode,
+        "structured_output_schema": schema,
+    }
+    if args.from_date:
+        kwargs["from_date"] = _parse_iso_date(args.from_date, "from")
+    if args.to_date:
+        kwargs["to_date"] = _parse_iso_date(args.to_date, "to")
+    if args.include_domain:
+        kwargs["include_domains"] = args.include_domain
+    if args.exclude_domain:
+        kwargs["exclude_domains"] = args.exclude_domain
+
+    summary_bits = [f"mode: {args.mode or 'default'}", f"reasoning: {args.reasoning or 'default'}", f"output: {args.output}"]
+    console.print(f"[dim]{' | '.join(summary_bits)}[/dim]")
+
+    try:
+        with console.status("[bold blue]Submitting research task...[/bold blue]"):
+            task = client.research(**kwargs)
+    except Exception as e:
+        error_str = str(e).lower()
+        if "401" in error_str or "unauthorized" in error_str:
+            console.print("[red]Error: Invalid or expired API key (401 Unauthorized)[/red]")
+        else:
+            console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+
+    console.print(f"[dim]Task ID: {task.id}[/dim]")
+
+    if args.no_wait:
+        console.print(f"[yellow]Submitted. Check status with:[/yellow] linkup research --id {task.id}")
+        return
+
+    # Poll until terminal state
+    delay = 2.0
+    max_delay = 10.0
+    try:
+        with console.status("[bold blue]Researching...[/bold blue]") as status:
+            while task.status not in ("completed", "failed"):
+                status.update(f"[bold blue]Researching... ({task.status})[/bold blue]")
+                time.sleep(delay)
+                delay = min(delay * 1.5, max_delay)
+                task = client.get_research(research_id=task.id)
+    except KeyboardInterrupt:
+        console.print(f"\n[yellow]Stopped polling. Task is still running.[/yellow]")
+        console.print(f"[dim]Resume with: linkup research --id {task.id}[/dim]")
+        sys.exit(0)
+
+    if task.status == "failed":
+        console.print(f"[red]Task failed: {task.error or 'unknown error'}[/red]")
+        sys.exit(1)
+
+    _render_research_output(task, console)
+
+
 def cmd_fetch(args):
     """Fetch and extract content from a URL."""
     from rich.console import Console
@@ -415,6 +613,7 @@ Examples:
   linkup search --clipboard                 # Search using clipboard content
   linkup search --file prompt.txt           # Search using file content
   linkup search                             # Interactive mode (paste + Ctrl+D)
+  linkup research "Find the top LLM companies and their CEOs" --reasoning L
   linkup fetch "https://example.com"
   linkup config                             # Show configuration
 
@@ -473,6 +672,40 @@ Documentation: https://docs.linkup.so
     )
     fetch_parser.add_argument("url", help="URL to fetch")
     fetch_parser.set_defaults(func=cmd_fetch)
+
+    # Research command
+    research_parser = subparsers.add_parser(
+        "research", aliases=["r"], help="Run a deep research task (async, polls until complete)"
+    )
+    research_parser.add_argument("query", nargs="*", help="Research query")
+    research_parser.add_argument(
+        "--reasoning", "-r",
+        choices=VALID_REASONING,
+        help="Reasoning depth: S (light), M, L, or XL (most thorough). Default: server default"
+    )
+    research_parser.add_argument(
+        "--mode", "-m",
+        choices=VALID_RESEARCH_MODES,
+        help="Mode: answer, auto, investigate, or research. Default: server default"
+    )
+    research_parser.add_argument(
+        "--output", "-o",
+        choices=VALID_RESEARCH_OUTPUT_TYPES,
+        default="sourcedAnswer",
+        help="Output type: sourcedAnswer or structured. Default: sourcedAnswer"
+    )
+    research_parser.add_argument("--schema-file", metavar="FILE", help="JSON schema file (with -o structured)")
+    research_parser.add_argument("--schema", metavar="JSON", help="Inline JSON schema (with -o structured)")
+    research_parser.add_argument("--from", dest="from_date", metavar="YYYY-MM-DD", help="Earliest date for sources")
+    research_parser.add_argument("--to", dest="to_date", metavar="YYYY-MM-DD", help="Latest date for sources")
+    research_parser.add_argument("--include-domain", action="append", metavar="DOMAIN", help="Restrict to this domain (repeatable)")
+    research_parser.add_argument("--exclude-domain", action="append", metavar="DOMAIN", help="Exclude this domain (repeatable)")
+    research_parser.add_argument("--clipboard", "-c", action="store_true", help="Read query from clipboard")
+    research_parser.add_argument("--file", "-f", metavar="FILE", help="Read query from a file")
+    research_parser.add_argument("--no-wait", action="store_true", help="Submit and print task ID without polling")
+    research_parser.add_argument("--id", metavar="ID", help="Fetch an existing task by ID")
+    research_parser.add_argument("--list", action="store_true", help="List recent research tasks")
+    research_parser.set_defaults(func=cmd_research)
 
     # Setup command
     setup_parser = subparsers.add_parser(

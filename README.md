@@ -96,6 +96,33 @@ linkup search "iPhone 16 Pro release date and starting price" -o structured \
   --schema '{"type":"object","properties":{"release_date":{"type":"string"},"starting_price_usd":{"type":"number"}}}'
 ```
 
+### Research
+
+Run a deep, multi-step research task. Unlike `search`, this is asynchronous on the server — the CLI submits the task, polls until it finishes, then prints the result.
+
+```bash
+# Submit and wait for the result
+linkup research "Find the top 5 LLM companies and their CEOs"
+
+# Tune reasoning depth and mode
+linkup research "..." --reasoning L --mode investigate
+
+# Filter sources by date or domain
+linkup research "..." --from 2025-01-01 --include-domain arxiv.org
+
+# Structured output (same flags as search)
+linkup research "..." -o structured --schema-file out.json
+
+# Fire and forget — print task ID without polling
+linkup research "..." --no-wait
+
+# Fetch a task you submitted earlier
+linkup research --id <task-id>
+
+# List your recent tasks
+linkup research --list
+```
+
 ### Fetch
 
 Extract clean markdown from any URL:
@@ -125,6 +152,7 @@ Env var takes precedence over the config file.
 |---------|-------|-------------|
 | `linkup setup` | | Interactive setup — open app.linkup.so, save API key, test connection |
 | `linkup search` | `linkup s` | Search the web |
+| `linkup research` | `linkup r` | Run a deep research task (async, polls until complete) |
 | `linkup fetch` | `linkup f` | Fetch and extract content from a URL |
 | `linkup config` | `linkup c` | Show current configuration |
 
