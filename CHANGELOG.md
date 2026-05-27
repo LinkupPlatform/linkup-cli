@@ -2,6 +2,20 @@
 
 All notable changes to the Linkup CLI are documented in this file.
 
+## [0.7.0] - 2026-05-27
+
+### Added
+- **`linkup research` subcommand**: submit deep research tasks that poll asynchronously
+  - `--reasoning S|M|L|XL`: control reasoning depth
+  - `--mode answer|auto|investigate|research`: control research mode
+  - `--output sourcedAnswer|structured` with `--schema-file` / `--schema`
+  - `--from` / `--to` (ISO date) for source date range
+  - `--include-domain` / `--exclude-domain` (repeatable) for domain filters
+  - `--no-wait`: submit and print task ID without polling
+  - `--id <task-id>`: fetch a previously submitted task
+  - `--list`: show recent research tasks
+  - Same `--clipboard`, `--file`, stdin, positional input modes as search
+
 ## [0.6.0] - 2026-05-26
 
 ### Added
