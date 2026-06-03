@@ -1,177 +1,66 @@
 # Linkup CLI
 
-Official Node.js command-line interface for [Linkup](https://linkup.so) — AI-powered web search from your terminal.
+Official command-line interface for [Linkup](https://linkup.so) — AI-powered web search from your terminal.
 
-## Installation
+## Install
 
 ```bash
 npm install -g linkup-cli
 ```
 
-## Configuration
+## Setup
 
-Configure your API key interactively:
+Set your API key interactively or via the environment:
 
 ```bash
 linkup setup
+export LINKUP_API_KEY="your-api-key"   # takes precedence over the saved config
 ```
 
-Or set it through the environment:
+Run `linkup config` to inspect the resolved key, or `linkup logout` to remove a saved key.
 
-```bash
-export LINKUP_API_KEY="your-api-key"
-```
-
-`LINKUP_API_KEY` takes precedence over the local config file at `~/.linkup/config`.
-
-Remove a saved local API key:
-
-```bash
-linkup logout
-```
-
-If `LINKUP_API_KEY` is set, `logout` cannot unset it from your shell environment.
-
-## Usage
-
-```bash
-linkup --help
-linkup --version
-linkup -v
-linkup -j search "query" # same as --json
-```
-
-Global flags can be placed before or after a command. Short command aliases are available for frequent commands (`s`, `f`, `r`); `setup`, `config`, and `logout` are intentionally spelled out. Note that `-c` on query commands means `--clipboard`.
-
-### Search
+## Commands
 
 ```bash
 linkup search "What is the capital of France?"
-```
-
-Search options:
-
-```bash
-linkup search "query" --depth fast
-linkup search "query" --depth standard
-linkup search "query" --depth deep
-
-linkup search "query" --output sourced-answer
-linkup search "query" --output search-results
-linkup search "query" --output structured --schema '{"type":"object","properties":{"answer":{"type":"string"}}}'
-linkup search "query" --output structured --schema-file schema.json
-linkup search "query" --schema-file schema.json # implies --output structured
-
-linkup search "query" --include-domains linkup.so,docs.linkup.so
-linkup search "query" --exclude-domains example.com
-linkup search "query" --from-date 2025-01-01 --to-date 2025-01-31
-linkup search "query" --output search-results --include-images --max-results 10
-```
-
-Date options accept JavaScript-parseable dates. ISO dates such as `YYYY-MM-DD` or full ISO timestamps are recommended.
-Passing `--schema` or `--schema-file` implies `--output structured` unless you explicitly set another `--output`.
-`--include-images` and `--max-results` only apply to `--output search-results`.
-
-Query input sources:
-
-```bash
-linkup search --clipboard
-linkup search --file query.txt
-echo "query" | linkup search
-linkup search # interactive prompt
-```
-
-Use one query source at a time. The CLI errors if you combine explicit sources such as `--clipboard`, `--file`, and a positional query.
-
-### Fetch
-
-```bash
 linkup fetch https://example.com
-linkup fetch https://example.com --render-js
-linkup fetch https://example.com --include-raw-html
-linkup fetch https://example.com --extract-images
-```
-
-Fetch extracts content from a URL through the Linkup API.
-Use `--render-js` for pages that require JavaScript execution, `--include-raw-html` to print the raw HTML after the extracted markdown, and `--extract-images` to print extracted image metadata.
-
-### Research
-
-Research runs as an asynchronous task on the Linkup API: you submit a query, the API works on it in the background, and you fetch the result later. The CLI is async by default so it fits cleanly into scripts and automations.
-
-```bash
 linkup research "State of the semiconductor market in 2026"
 ```
 
-By default this submits the task and prints its id immediately, then exits. Fetch the result later:
+Add `--help` to any command for the full list of options. Use `--json` (or `-j`) to print the raw API response for scripting.
+
+### Search
+
+Immediate web search. Control effort with `--depth` (`fast`, `standard`, `deep`) and output with `--output` (`sourced-answer`, `search-results`, `structured`).
 
 ```bash
-linkup research get <id>
+linkup search "query" --depth deep
+linkup search "query" --output structured --schema-file schema.json
+linkup search "query" --include-domains linkup.so --from-date 2025-01-01
 ```
 
-For an interactive, "run it and show me the answer" experience, pass `--wait` to poll until the task completes (or fails) and then print the result:
+### Fetch
+
+Extract content from a URL. Use `--render-js` for JS-heavy pages, `--include-raw-html`, or `--extract-images`.
 
 ```bash
-linkup research "..." --wait
-linkup research get <id> --wait
+linkup fetch https://example.com --render-js
 ```
 
-While waiting, a progress indicator is shown on stderr so piped stdout stays clean. Tune the polling loop with `--poll-interval <seconds>` (default 5) and `--timeout <seconds>` (default 1200, 20 minutes). On timeout the task keeps running on the server; the CLI prints the id so you can resume with `linkup research get <id> --wait`.
+### Research
 
-Research options:
+Asynchronous deep research. By default it submits the task, prints its id, and exits; pass `--wait` to poll until it finishes.
 
 ```bash
-linkup research "query" --mode answer
-linkup research "query" --mode auto
-linkup research "query" --mode investigate
-linkup research "query" --mode research
-
-linkup research "query" --reasoning-depth S
-linkup research "query" --reasoning-depth M
-linkup research "query" --reasoning-depth L
-linkup research "query" --reasoning-depth XL
-
-linkup research "query" --output sourced-answer
-linkup research "query" --output structured --schema-file schema.json
-linkup research "query" --output structured --schema '{"type":"object","properties":{"summary":{"type":"string"}}}'
-linkup research "query" --schema-file schema.json # implies --output structured
-
-linkup research "query" --include-domains linkup.so,docs.linkup.so
-linkup research "query" --exclude-domains example.com
-linkup research "query" --from-date 2025-01-01 --to-date 2025-01-31
+linkup research "query"              # submit, prints id
+linkup research get <id>             # fetch the result later
+linkup research "query" --wait       # submit and wait for the answer
+linkup research list                 # recent tasks
 ```
 
-Unlike `search`, research does not support `--output search-results` and has no `--depth`; control effort with `--mode` and `--reasoning-depth` (default `L`) instead. Think of `search --depth` as the simple effort control for immediate answers, and `research --mode` plus `--reasoning-depth` as the effort controls for asynchronous tasks.
+Control effort with `--mode` (`answer`, `auto`, `investigate`, `research`) and `--reasoning-depth` (`S`, `M`, `L`, `XL`). Tune polling with `--poll-interval` and `--timeout`.
 
-Query input sources (same as `search`):
-
-```bash
-linkup research --clipboard
-linkup research --file query.txt
-echo "query" | linkup research
-linkup research # interactive prompt
-```
-
-Use one query source at a time. The CLI errors if you combine explicit sources such as `--clipboard`, `--file`, and a positional query.
-
-List recent research tasks:
-
-```bash
-linkup research list
-linkup research list --page 1 --page-size 10 --sort-by createdAt --sort-direction desc
-```
-
-#### Automation
-
-The async-by-default flow makes research easy to script. Submit with `--json` (or `-j`), capture the id, then poll later:
-
-```bash
-ID=$(linkup --json research "your question" | jq -r '.id')
-# ... do other work, or run on a schedule ...
-linkup --json research get "$ID" | jq '.output'
-```
-
-Or block until completion in a single step and consume the JSON result directly:
+Scripting example:
 
 ```bash
 linkup --json research "your question" --wait | jq '.output.answer'
@@ -179,89 +68,15 @@ linkup --json research "your question" --wait | jq '.output.answer'
 
 ### Tasks
 
-Tasks expose the generic asynchronous API for batching and managing `search`, `fetch`, and `research` work. Keep using `linkup research` for a simple single research task; use `linkup tasks` when you want mixed batches, unified lookup, filters, or queue visibility.
-
-Create tasks from a JSON file or stdin:
+Generic async API for batching and managing `search`, `fetch`, and `research` work. Create tasks from a JSON file or stdin (one object or an array, using camelCase fields):
 
 ```bash
-linkup tasks create --file tasks.json
-cat tasks.json | linkup tasks create
 linkup tasks create --file tasks.json --wait
-```
-
-`tasks.json` may contain one task object or an array of task objects. This batch format uses the SDK's camelCase field names:
-
-```json
-[
-  {
-    "type": "search",
-    "input": {
-      "query": "Linkup latest product updates",
-      "depth": "deep",
-      "outputType": "sourcedAnswer"
-    }
-  },
-  {
-    "type": "fetch",
-    "input": {
-      "url": "https://docs.linkup.so"
-    }
-  },
-  {
-    "type": "research",
-    "input": {
-      "query": "Semiconductor market in 2026",
-      "outputType": "sourcedAnswer"
-    }
-  }
-]
-```
-
-Fetch or wait for any task type:
-
-```bash
-linkup tasks get <id>
 linkup tasks get <id> --wait
+linkup tasks list --status pending,processing --type search,research
 ```
 
-List tasks, including queue usage:
-
-```bash
-linkup tasks list
-linkup tasks list --status pending,processing
-linkup tasks list --type search,research
-linkup tasks list --page 1 --page-size 20 --sort-by createdAt --sort-direction desc
-```
-
-`tasks list` prints queue usage on stderr so stdout remains pipe-friendly. The current SDK does not expose task cancel or delete operations.
-
-For single `search` or `fetch` calls, add `--async` to enqueue the same request as a task:
-
-```bash
-linkup search "query" --depth deep --async
-linkup search "query" --async --wait
-linkup fetch https://example.com --async --wait
-```
-
-### JSON output
-
-Use `--json` to print the raw API response as pretty-printed JSON:
-
-```bash
-linkup --json search "query"
-linkup -j fetch https://example.com
-linkup --json fetch https://example.com
-linkup --json research "query" --wait
-linkup --json tasks list
-```
-
-### Config
-
-```bash
-linkup config
-```
-
-Shows the resolved API key source, masked key, and config path.
+For single `search`/`fetch` calls, add `--async` to enqueue them as tasks.
 
 ## Development
 
@@ -270,14 +85,7 @@ git clone https://github.com/LinkupPlatform/linkup-cli-v2
 cd linkup-cli-v2
 npm install
 npm run build
-npm link          # makes 'linkup' available globally from this local build
-linkup --help
-```
-
-To use the local [linkup-js-sdk](https://github.com/LinkupPlatform/linkup-js-sdk) during development:
-
-```bash
-npm install ../linkup-js-sdk
+npm link          # makes 'linkup' available from this local build
 ```
 
 ## Links
