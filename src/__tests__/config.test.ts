@@ -1,7 +1,14 @@
-import { chmodSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { getApiKey, maskApiKey, readKeyFromFile, resolveConfig, saveApiKey } from '../config';
+import {
+  clearApiKey,
+  getApiKey,
+  maskApiKey,
+  readKeyFromFile,
+  resolveConfig,
+  saveApiKey,
+} from '../config';
 
 const ENV_VAR_NAME = 'LINKUP_API_KEY';
 const originalEnvKey = process.env[ENV_VAR_NAME];
@@ -83,6 +90,14 @@ describe('getApiKey', () => {
     expect(getApiKey(configPath)).toBe('file-key');
   });
 
+  it('falls back to the config file when env var is whitespace', () => {
+    const configPath = tempConfigPath();
+    writeFileSync(configPath, 'api_key=file-key\n');
+    process.env[ENV_VAR_NAME] = '   ';
+
+    expect(getApiKey(configPath)).toBe('file-key');
+  });
+
   it('returns null when neither env nor file is configured', () => {
     const configPath = tempConfigPath();
     delete process.env[ENV_VAR_NAME];
@@ -103,7 +118,7 @@ describe('saveApiKey', () => {
     const configPath = tempConfigPath();
 
     expect(() => saveApiKey('', configPath)).toThrow(
-      'Invalid API key: must be non-empty and single-line.',
+      'Invalid API key: must be at least 10 characters and single-line.',
     );
   });
 
@@ -111,8 +126,16 @@ describe('saveApiKey', () => {
     const configPath = tempConfigPath();
 
     expect(() => saveApiKey('abc\ninjected', configPath)).toThrow(
-      'Invalid API key: must be non-empty and single-line.',
+      'Invalid API key: must be at least 10 characters and single-line.',
     );
+  });
+
+  it('trims keys before saving', () => {
+    const configPath = tempConfigPath();
+
+    saveApiKey('  my-secret-key  ', configPath);
+
+    expect(readFileSync(configPath, 'utf8')).toBe('api_key=my-secret-key\n');
   });
 
   it('sets restrictive file and directory permissions on Unix', () => {
@@ -128,6 +151,20 @@ describe('saveApiKey', () => {
 
     expect(dirMode).toBe(0o700);
     expect(fileMode).toBe(0o600);
+  });
+});
+
+describe('clearApiKey', () => {
+  it('removes the saved config file when it exists', () => {
+    const configPath = tempConfigPath();
+    saveApiKey('my-secret-key', configPath);
+
+    expect(clearApiKey(configPath)).toBe(true);
+    expect(existsSync(configPath)).toBe(false);
+  });
+
+  it('returns false when no saved config file exists', () => {
+    expect(clearApiKey(tempConfigPath())).toBe(false);
   });
 });
 

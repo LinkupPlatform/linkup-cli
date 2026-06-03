@@ -25,6 +25,24 @@ afterEach(() => {
 });
 
 describe('getClient', () => {
+  it('uses an explicit API key override before env or file config', () => {
+    const resolveConfigSpy = jest.spyOn(config, 'resolveConfig');
+
+    const client = getClient('override-api-key-abcdefghijklmnop');
+
+    expect(client).toBeInstanceOf(LinkupClient);
+    expect(resolveConfigSpy).not.toHaveBeenCalled();
+  });
+
+  it('exits with code 1 when an explicit API key override is invalid', () => {
+    const exitMock = jest.fn() as never;
+    process.exit = exitMock;
+
+    getClient('short');
+
+    expect(exitMock).toHaveBeenCalledWith(1);
+  });
+
   it('returns a LinkupClient when an API key is configured', () => {
     process.env[ENV_VAR_NAME] = 'test-api-key-abcdefghijklmnop';
 

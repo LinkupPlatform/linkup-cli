@@ -1,16 +1,14 @@
 import type { Command } from 'commander';
 import { LinkupClient } from 'linkup-sdk';
-import { getConfigPath, saveApiKey } from '../config';
+import { getConfigPath, saveApiKey, validateApiKey } from '../config';
+import { exitWithCode, exitWithError, formatError, formatErrorLine } from '../output/errors';
 
 const SETUP_URL = 'https://app.linkup.so';
-const MIN_KEY_LENGTH = 10;
 
 /** Validate the pasted key. Returns an error message, or null when the key is acceptable. */
 export function validateSetupKey(apiKey: string): string | null {
-  if (!apiKey || apiKey.length < MIN_KEY_LENGTH) {
-    return 'Error: Invalid API key';
-  }
-  return null;
+  const validationError = validateApiKey(apiKey);
+  return validationError;
 }
 
 async function runSetup(): Promise<void> {
@@ -33,13 +31,12 @@ async function runSetup(): Promise<void> {
   } catch {
     // Inquirer throws on Ctrl+C / EOF; treat as a user cancel.
     console.log('\nSetup cancelled.');
-    process.exit(0);
+    exitWithCode(0);
   }
 
   const validationError = validateSetupKey(apiKey);
   if (validationError) {
-    console.error(validationError);
-    process.exit(1);
+    exitWithError(`Error: ${validationError}`);
   }
 
   console.log('\nStep 2: Save configuration');
@@ -47,9 +44,7 @@ async function runSetup(): Promise<void> {
     saveApiKey(apiKey);
     console.log(`API key saved to ${getConfigPath()}`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error saving config: ${message}`);
-    process.exit(1);
+    exitWithError(formatErrorLine(`Saving config failed: ${formatError(error)}`));
   }
 
   console.log('\nStep 3: Test connection');
@@ -58,8 +53,7 @@ async function runSetup(): Promise<void> {
     await client.search({ depth: 'fast', outputType: 'searchResults', query: 'test' });
     console.log('Connected to Linkup API');
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Warning: connection test failed: ${message}`);
+    console.error(`Warning: connection test failed: ${formatError(error)}`);
     console.error('Your API key was saved. You can test it with \'linkup search "hello"\'');
   }
 

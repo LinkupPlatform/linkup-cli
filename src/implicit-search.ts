@@ -6,6 +6,7 @@ export const KNOWN_COMMANDS = new Set([
   'setup',
   'config',
   'c',
+  'logout',
   'help',
 ]);
 

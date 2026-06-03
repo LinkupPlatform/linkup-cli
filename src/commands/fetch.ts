@@ -1,14 +1,54 @@
-import type { Command } from 'commander';
+import { type Command, InvalidArgumentError } from 'commander';
+import type { FetchParams } from 'linkup-sdk';
 import { getClient } from '../client';
-import { reportErrorAndExit } from '../output/errors';
+import { exitWithError, formatErrorLine } from '../output/errors';
+import { formatFetch } from '../output/fetch';
+import { formatJson } from '../output/json';
 
-async function runFetch(url: string): Promise<void> {
+export type FetchCommandOptions = {
+  renderJs?: boolean;
+  includeRawHtml?: boolean;
+  extractImages?: boolean;
+};
+
+type FetchGlobalOptions = {
+  apiKey?: string;
+  json?: boolean;
+};
+
+function parseFetchUrl(value: string): string {
   try {
-    const client = getClient();
-    const response = await client.fetch({ url });
-    console.log(JSON.stringify(response));
+    new URL(value);
+  } catch {
+    throw new InvalidArgumentError('must be a valid URL');
+  }
+  return value;
+}
+
+export function buildFetchParams(url: string, options: FetchCommandOptions): FetchParams {
+  return {
+    url,
+    ...(options.renderJs && { renderJs: true }),
+    ...(options.includeRawHtml && { includeRawHtml: true }),
+    ...(options.extractImages && { extractImages: true }),
+  };
+}
+
+async function runFetch(
+  url: string,
+  options: FetchCommandOptions,
+  command: Command,
+): Promise<void> {
+  try {
+    const globalOptions = command.optsWithGlobals<FetchGlobalOptions>();
+    const client = getClient(globalOptions.apiKey);
+    const response = await client.fetch(buildFetchParams(url, options));
+    const lines = globalOptions.json ? formatJson(response) : formatFetch(response);
+    for (const line of lines) {
+      console.log(line);
+    }
   } catch (error) {
-    reportErrorAndExit(error);
+    exitWithError(formatErrorLine(error));
   }
 }
 
@@ -17,6 +57,18 @@ export function registerFetchCommand(program: Command): void {
     .command('fetch')
     .alias('f')
     .description('Fetch and extract content from a URL')
-    .argument('<url>', 'URL to fetch')
+    .argument('<url>', 'URL to fetch', parseFetchUrl)
+    .option('--render-js', 'Execute JavaScript before extracting content')
+    .option('--include-raw-html', 'Include the raw HTML in the response output')
+    .option('--extract-images', 'Extract image metadata from the fetched page')
+    .addHelpText(
+      'after',
+      `
+Examples:
+  linkup fetch https://example.com
+  linkup fetch https://example.com --render-js
+  linkup fetch https://example.com --include-raw-html --json
+`,
+    )
     .action(runFetch);
 }

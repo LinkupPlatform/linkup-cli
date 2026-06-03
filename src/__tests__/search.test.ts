@@ -31,6 +31,35 @@ describe('buildSearchParams', () => {
     });
   });
 
+  it('maps search filtering, date, image, and limit options to SDK fields', () => {
+    const fromDate = new Date('2025-01-01');
+    const toDate = new Date('2025-01-31');
+
+    const { params, warnings } = buildSearchParams('q', {
+      depth: 'deep',
+      excludeDomains: ['example.com'],
+      fromDate,
+      includeDomains: ['linkup.so', 'docs.linkup.so'],
+      includeImages: true,
+      maxResults: 10,
+      outputType: 'searchResults',
+      toDate,
+    });
+
+    expect(params).toEqual({
+      depth: 'deep',
+      excludeDomains: ['example.com'],
+      fromDate,
+      includeDomains: ['linkup.so', 'docs.linkup.so'],
+      includeImages: true,
+      maxResults: 10,
+      outputType: 'searchResults',
+      query: 'q',
+      toDate,
+    });
+    expect(warnings).toEqual([]);
+  });
+
   it('maps structured output with inline schema to structuredOutputSchema', () => {
     const { params } = buildSearchParams('q', {
       depth: 'standard',
@@ -82,7 +111,7 @@ describe('buildSearchParams', () => {
         outputType: 'structured',
         schema: '{not json',
       }),
-    ).toThrow('schema is not valid JSON');
+    ).toThrow('Schema is not valid JSON');
   });
 
   it('rejects JSON that is not an object', () => {
@@ -92,7 +121,18 @@ describe('buildSearchParams', () => {
         outputType: 'structured',
         schema: '[]',
       }),
-    ).toThrow('schema must be a JSON object');
+    ).toThrow('Schema must be a JSON object');
+  });
+
+  it('rejects date ranges where fromDate is after toDate', () => {
+    expect(() =>
+      buildSearchParams('q', {
+        depth: 'standard',
+        fromDate: new Date('2025-02-01'),
+        outputType: 'sourcedAnswer',
+        toDate: new Date('2025-01-01'),
+      }),
+    ).toThrow('--from-date must be before or equal to --to-date');
   });
 
   it('warns when schema is provided without structured output', () => {
@@ -108,7 +148,26 @@ describe('buildSearchParams', () => {
       query: 'q',
     });
     expect(warnings).toContain(
-      'Warning: --schema/--schema-file ignored (only used with -o structured)',
+      'Warning: --schema/--schema-file ignored (only used with --output structured)',
     );
+  });
+
+  it('warns and omits search-result-only options for sourced answers', () => {
+    const { params, warnings } = buildSearchParams('q', {
+      depth: 'standard',
+      includeImages: true,
+      maxResults: 5,
+      outputType: 'sourcedAnswer',
+    });
+
+    expect(params).toEqual({
+      depth: 'standard',
+      outputType: 'sourcedAnswer',
+      query: 'q',
+    });
+    expect(warnings).toEqual([
+      'Warning: --include-images ignored (only used with --output search-results)',
+      'Warning: --max-results ignored (only used with --output search-results)',
+    ]);
   });
 });
