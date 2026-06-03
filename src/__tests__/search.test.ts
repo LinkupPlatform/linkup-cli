@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildSearchParams } from '../commands/search';
+import { buildSearchParams, buildSearchTaskRequest } from '../commands/search';
 
 describe('buildSearchParams', () => {
   it('maps sourcedAnswer flags to SDK field names', () => {
@@ -196,5 +196,19 @@ describe('buildSearchParams', () => {
       'Warning: --include-images ignored (only used with --output search-results)',
       'Warning: --max-results ignored (only used with --output search-results)',
     ]);
+  });
+});
+
+describe('buildSearchTaskRequest', () => {
+  it('wraps search params as a generic task request', () => {
+    const { params } = buildSearchParams('hello world', {
+      depth: 'deep',
+      outputType: 'sourcedAnswer',
+    });
+
+    expect(buildSearchTaskRequest(params)).toEqual({
+      input: params,
+      type: 'search',
+    });
   });
 });

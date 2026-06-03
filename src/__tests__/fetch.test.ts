@@ -1,4 +1,4 @@
-import { buildFetchParams } from '../commands/fetch';
+import { buildFetchParams, buildFetchTaskRequest } from '../commands/fetch';
 
 describe('buildFetchParams', () => {
   it('maps the URL without optional flags by default', () => {
@@ -19,6 +19,17 @@ describe('buildFetchParams', () => {
       includeRawHtml: true,
       renderJs: true,
       url: 'https://example.com',
+    });
+  });
+});
+
+describe('buildFetchTaskRequest', () => {
+  it('wraps fetch params as a generic task request', () => {
+    const params = buildFetchParams('https://example.com', { renderJs: true });
+
+    expect(buildFetchTaskRequest(params)).toEqual({
+      input: params,
+      type: 'fetch',
     });
   });
 });

@@ -2,7 +2,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { ResearchTask } from 'linkup-sdk';
-import { buildListResearchParams, buildResearchParams, pollResearch } from '../commands/research';
+import { pollTask } from '../commands/async-task';
+import { buildListResearchParams, buildResearchParams } from '../commands/research';
 
 function makeTask(status: ResearchTask['status']): ResearchTask {
   return {
@@ -171,14 +172,14 @@ describe('buildListResearchParams', () => {
   });
 });
 
-describe('pollResearch', () => {
+describe('pollTask with research tasks', () => {
   const noSleep = (): Promise<void> => Promise.resolve();
 
   it('returns immediately when the task is already completed', async () => {
     const getResearch = jest.fn().mockResolvedValue(makeTask('completed'));
 
-    const result = await pollResearch({
-      getResearch,
+    const result = await pollTask({
+      getTask: getResearch,
       id: 'task-1',
       intervalMs: 10,
       sleep: noSleep,
@@ -196,8 +197,8 @@ describe('pollResearch', () => {
       .mockResolvedValueOnce(makeTask('processing'))
       .mockResolvedValueOnce(makeTask('failed'));
 
-    const result = await pollResearch({
-      getResearch,
+    const result = await pollTask({
+      getTask: getResearch,
       id: 'task-1',
       intervalMs: 10,
       sleep: noSleep,
@@ -217,8 +218,8 @@ describe('pollResearch', () => {
       return value;
     };
 
-    const result = await pollResearch({
-      getResearch,
+    const result = await pollTask({
+      getTask: getResearch,
       id: 'task-1',
       intervalMs: 10,
       now,

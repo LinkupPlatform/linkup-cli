@@ -1,4 +1,5 @@
 import type { PaginatedResearchTasks, ResearchTask, SourcedAnswer } from 'linkup-sdk';
+import { truncate } from '../utils';
 import { formatSourcedAnswer, formatStructured } from './search';
 
 const MAX_QUERY_LENGTH = 60;
@@ -54,10 +55,11 @@ export function formatResearchList(paginated: PaginatedResearchTasks): string[] 
 
   const lines = [''];
   for (const task of data) {
-    const query = task.input.query;
-    const truncated =
-      query.length > MAX_QUERY_LENGTH ? `${query.slice(0, MAX_QUERY_LENGTH - 3)}...` : query;
-    lines.push(`${task.id}  [${task.status}]  ${task.createdAt}`, `  ${truncated}`, '');
+    lines.push(
+      `${task.id}  [${task.status}]  ${task.createdAt}`,
+      `  ${truncate(task.input.query, MAX_QUERY_LENGTH)}`,
+      '',
+    );
   }
 
   lines.push(`Page ${metadata.page}/${metadata.totalPages} (${metadata.total} total)`, '');

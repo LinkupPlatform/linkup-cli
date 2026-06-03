@@ -1,6 +1,5 @@
 import { Command, Option } from 'commander';
 import type {
-  LinkupClient,
   ListResearchParams,
   ResearchMode,
   ResearchParams,
@@ -17,13 +16,23 @@ import {
   formatResearchSubmitted,
   formatResearchTask,
 } from '../output/research';
+import {
+  createPollIntervalOption,
+  createTimeoutOption,
+  type PollTaskResult,
+  printTimeoutHint,
+  waitForTask,
+} from './async-task';
 import { parseDateOption, parseDomainList, parsePositiveInt } from './option-parsers';
 import { queryUsageLines, resolveQueryOrExit } from './query-input';
 import {
+  addSchemaIgnoredWarning,
   buildCommonParams,
+  buildPaginationSortParams,
+  hasStructuredSchemaOption,
   isOptionExplicit,
   loadStructuredSchema,
-  SCHEMA_IGNORED_WARNING,
+  resolveStructuredOutputType,
   STRUCTURED_REQUIRES_SCHEMA,
 } from './shared-params';
 
@@ -41,20 +50,7 @@ const OUTPUT_TYPE_MAP: Record<ResearchCliOutputType, ResearchOutputType> = {
   structured: 'structured',
 };
 
-const DEFAULT_POLL_INTERVAL_SECONDS = 10;
-const DEFAULT_TIMEOUT_SECONDS = 20 * 60;
 const DEFAULT_REASONING_DEPTH: ResearchReasoningDepth = 'L';
-
-const pollIntervalOption = new Option(
-  '--poll-interval <seconds>',
-  'Seconds between status checks when waiting',
-)
-  .default(DEFAULT_POLL_INTERVAL_SECONDS)
-  .argParser((value: string) => parsePositiveInt(value));
-
-const timeoutOption = new Option('--timeout <seconds>', 'Maximum seconds to wait before giving up')
-  .default(DEFAULT_TIMEOUT_SECONDS, `${DEFAULT_TIMEOUT_SECONDS} (20 minutes)`)
-  .argParser((value: string) => parsePositiveInt(value));
 
 export type ResearchCliOptions = {
   outputType: ResearchOutputType;
@@ -125,12 +121,10 @@ export function buildResearchParams(
   opts: ResearchCliOptions,
 ): BuildResearchParamsResult {
   const warnings: string[] = [];
-  const hasSchemaOption = Boolean(opts.schemaFile || opts.schema);
-  const outputType = resolveResearchOutputType(opts, hasSchemaOption);
+  const hasSchemaOption = hasStructuredSchemaOption(opts);
+  const outputType = resolveStructuredOutputType(opts);
 
-  if (outputType !== 'structured' && hasSchemaOption) {
-    warnings.push(SCHEMA_IGNORED_WARNING);
-  }
+  addSchemaIgnoredWarning(outputType, hasSchemaOption, warnings);
 
   const extraParams = buildResearchExtraParams(opts);
 
@@ -159,63 +153,8 @@ export function buildResearchParams(
   };
 }
 
-function resolveResearchOutputType(
-  opts: ResearchCliOptions,
-  hasSchemaOption: boolean,
-): ResearchOutputType {
-  if (hasSchemaOption && opts.outputType === 'sourcedAnswer' && !opts.outputTypeExplicit) {
-    return 'structured';
-  }
-  return opts.outputType;
-}
-
 export function buildListResearchParams(opts: ListResearchCliOptions): ListResearchParams {
-  return {
-    ...(opts.page !== undefined && { page: opts.page }),
-    ...(opts.pageSize !== undefined && { pageSize: opts.pageSize }),
-    ...(opts.sortBy && { sortBy: opts.sortBy }),
-    ...(opts.sortDirection && { sortDirection: opts.sortDirection }),
-  };
-}
-
-export type PollResearchStatus = 'completed' | 'failed' | 'timeout';
-
-export type PollResearchOptions = {
-  getResearch: (id: string) => Promise<ResearchTask>;
-  id: string;
-  intervalMs: number;
-  timeoutMs: number;
-  sleep?: (ms: number) => Promise<void>;
-  now?: () => number;
-};
-
-export type PollResearchResult = {
-  status: PollResearchStatus;
-  task: ResearchTask;
-};
-
-const defaultSleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * Poll a research task until it reaches a terminal state or the timeout elapses.
- * Timers and clock are injectable so the loop can be unit-tested without real delays.
- */
-export async function pollResearch(options: PollResearchOptions): Promise<PollResearchResult> {
-  const sleep = options.sleep ?? defaultSleep;
-  const now = options.now ?? Date.now;
-  const start = now();
-
-  let task = await options.getResearch(options.id);
-
-  while (task.status !== 'completed' && task.status !== 'failed') {
-    if (now() - start >= options.timeoutMs) {
-      return { status: 'timeout', task };
-    }
-    await sleep(options.intervalMs);
-    task = await options.getResearch(options.id);
-  }
-
-  return { status: task.status as 'completed' | 'failed', task };
+  return buildPaginationSortParams(opts);
 }
 
 function toResearchCliOptions(
@@ -236,53 +175,9 @@ function toResearchCliOptions(
   };
 }
 
-type WaitForResearchOptions = {
-  client: Pick<LinkupClient, 'getResearch'>;
-  id: string;
-  pollIntervalSeconds: number;
-  timeoutSeconds: number;
-  json: boolean;
-};
-
-function startSpinner(label: string): () => void {
-  if (!process.stderr.isTTY) {
-    process.stderr.write(`${label}\n`);
-    return () => {};
-  }
-
-  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-  let index = 0;
-  const timer = setInterval(() => {
-    index = (index + 1) % frames.length;
-    process.stderr.write(`\r${frames[index]} ${label}`);
-  }, 80);
-
-  return () => {
-    clearInterval(timer);
-    process.stderr.write('\r\u001b[K');
-  };
-}
-
-async function waitForResearch(options: WaitForResearchOptions): Promise<PollResearchResult> {
-  const stopSpinner = options.json ? () => {} : startSpinner('Researching...');
-  try {
-    return await pollResearch({
-      getResearch: id => options.client.getResearch(id),
-      id: options.id,
-      intervalMs: options.pollIntervalSeconds * 1000,
-      timeoutMs: options.timeoutSeconds * 1000,
-    });
-  } finally {
-    stopSpinner();
-  }
-}
-
-function printTaskResult(result: PollResearchResult, json: boolean): void {
+function printResearchResult(result: PollTaskResult<ResearchTask>, json: boolean): void {
   if (result.status === 'timeout') {
-    console.error(
-      `Timed out waiting for research ${result.task.id}. It is still running; check again with:`,
-    );
-    console.error(`  linkup research get ${result.task.id} --wait`);
+    printTimeoutHint('research', result.task.id);
   }
 
   const lines = json ? formatJson(result.task) : formatResearchTask(result.task);
@@ -317,14 +212,15 @@ async function runResearchSubmit(
     const task = await client.research(params);
 
     if (options.wait) {
-      const result = await waitForResearch({
-        client,
+      const result = await waitForTask({
+        getTask: id => client.getResearch(id),
         id: task.id,
         json,
+        label: 'Researching...',
         pollIntervalSeconds: options.pollInterval,
         timeoutSeconds: options.timeout,
       });
-      printTaskResult(result, json);
+      printResearchResult(result, json);
       return;
     }
 
@@ -344,14 +240,15 @@ async function runResearchGet(
 
   try {
     if (options.wait) {
-      const result = await waitForResearch({
-        client,
+      const result = await waitForTask({
+        getTask: taskId => client.getResearch(taskId),
         id,
         json,
+        label: 'Researching...',
         pollIntervalSeconds: options.pollInterval,
         timeoutSeconds: options.timeout,
       });
-      printTaskResult(result, json);
+      printResearchResult(result, json);
       return;
     }
 
@@ -429,8 +326,8 @@ export function registerResearchCommand(program: Command): void {
     .option('-c, --clipboard', 'Read query from clipboard')
     .option('-f, --file <path>', 'Read query from a file')
     .option('-w, --wait', 'Wait for the task to complete and print the result')
-    .addOption(pollIntervalOption)
-    .addOption(timeoutOption)
+    .addOption(createPollIntervalOption())
+    .addOption(createTimeoutOption())
     .addHelpText(
       'after',
       `
@@ -451,8 +348,8 @@ Examples:
     .description('Fetch a research task by id')
     .argument('<id>', 'Research task id')
     .option('-w, --wait', 'Poll until the task completes')
-    .addOption(pollIntervalOption)
-    .addOption(timeoutOption)
+    .addOption(createPollIntervalOption())
+    .addOption(createTimeoutOption())
     .action(runResearchGet);
 
   research

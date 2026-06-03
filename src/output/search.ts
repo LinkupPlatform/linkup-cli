@@ -1,11 +1,8 @@
 import type { SearchResults, SourcedAnswer } from 'linkup-sdk';
 import type { SearchOutputType } from '../commands/search';
+import { isRecord } from '../utils';
 
 const MAX_SOURCES = 5;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 function assertSourcedAnswer(response: unknown): asserts response is SourcedAnswer {
   if (!isRecord(response) || typeof response.answer !== 'string') {

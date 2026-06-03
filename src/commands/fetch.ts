@@ -1,14 +1,19 @@
 import { type Command, InvalidArgumentError } from 'commander';
-import type { FetchParams } from 'linkup-sdk';
+import type { FetchParams, TaskRequest } from 'linkup-sdk';
 import { resolveGlobals } from '../client';
-import { exitWithError, formatErrorLine, printLines } from '../output/errors';
+import { exitWithError, formatErrorLine } from '../output/errors';
 import { formatFetch } from '../output/fetch';
-import { formatJson } from '../output/json';
+import { formatTaskErrorLine } from '../output/task-errors';
+import { createPollIntervalOption, createTimeoutOption, runAsyncTaskFlow } from './async-task';
 
 export type FetchCommandOptions = {
   renderJs?: boolean;
   includeRawHtml?: boolean;
   extractImages?: boolean;
+  async?: boolean;
+  wait?: boolean;
+  pollInterval?: number;
+  timeout?: number;
 };
 
 function parseFetchUrl(value: string): string {
@@ -29,6 +34,10 @@ export function buildFetchParams(url: string, options: FetchCommandOptions): Fet
   };
 }
 
+export function buildFetchTaskRequest(params: FetchParams): TaskRequest {
+  return { input: params, type: 'fetch' };
+}
+
 async function runFetch(
   url: string,
   options: FetchCommandOptions,
@@ -36,11 +45,22 @@ async function runFetch(
 ): Promise<void> {
   try {
     const { client, json } = resolveGlobals(command);
-    const response = await client.fetch(buildFetchParams(url, options));
-    const lines = json ? formatJson(response) : formatFetch(response);
-    printLines(lines);
+    const params = buildFetchParams(url, options);
+
+    await runAsyncTaskFlow({
+      async: options.async,
+      buildRequest: buildFetchTaskRequest,
+      client,
+      formatSync: formatFetch,
+      json,
+      params,
+      pollIntervalSeconds: options.pollInterval,
+      runSync: fetchParams => client.fetch(fetchParams),
+      timeoutSeconds: options.timeout,
+      wait: options.wait,
+    });
   } catch (error) {
-    exitWithError(formatErrorLine(error));
+    exitWithError(options.async ? formatTaskErrorLine(error) : formatErrorLine(error));
   }
 }
 
@@ -53,6 +73,10 @@ export function registerFetchCommand(program: Command): void {
     .option('--render-js', 'Execute JavaScript before extracting content')
     .option('--include-raw-html', 'Include the raw HTML in the response output')
     .option('--extract-images', 'Extract image metadata from the fetched page')
+    .option('--async', 'Run the fetch as an asynchronous task')
+    .option('-w, --wait', 'Wait for the asynchronous task to complete and print the result')
+    .addOption(createPollIntervalOption())
+    .addOption(createTimeoutOption())
     .addHelpText(
       'after',
       `
@@ -60,6 +84,7 @@ Examples:
   linkup fetch https://example.com
   linkup fetch https://example.com --render-js
   linkup fetch https://example.com --include-raw-html --json
+  linkup fetch https://example.com --async --wait
 `,
     )
     .action(runFetch);

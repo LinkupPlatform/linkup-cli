@@ -1,16 +1,19 @@
 import { Command, Option } from 'commander';
-import type { SearchDepth, SearchParams } from 'linkup-sdk';
+import type { SearchDepth, SearchParams, TaskRequest } from 'linkup-sdk';
 import { resolveGlobals } from '../client';
-import { exitWithError, formatErrorLine, printLines } from '../output/errors';
-import { formatJson } from '../output/json';
+import { exitWithError, formatErrorLine } from '../output/errors';
 import { formatSearch } from '../output/search';
+import { formatTaskErrorLine } from '../output/task-errors';
+import { createPollIntervalOption, createTimeoutOption, runAsyncTaskFlow } from './async-task';
 import { parseDateOption, parseDomainList, parsePositiveInt } from './option-parsers';
 import { queryUsageLines, resolveQueryOrExit } from './query-input';
 import {
+  addSchemaIgnoredWarning,
   buildCommonParams,
+  hasStructuredSchemaOption,
   isOptionExplicit,
   loadStructuredSchema,
-  SCHEMA_IGNORED_WARNING,
+  resolveStructuredOutputType,
   STRUCTURED_REQUIRES_SCHEMA,
 } from './shared-params';
 
@@ -63,6 +66,10 @@ type SearchCommandOptions = {
   maxResults?: number;
   clipboard?: boolean;
   file?: string;
+  async?: boolean;
+  wait?: boolean;
+  pollInterval?: number;
+  timeout?: number;
 };
 
 function toSearchCliOptions(
@@ -86,8 +93,12 @@ function toSearchCliOptions(
 
 export function buildSearchParams(query: string, opts: SearchCliOptions): BuildSearchParamsResult {
   const warnings: string[] = [];
-  const hasSchemaOption = Boolean(opts.schemaFile || opts.schema);
-  const outputType = resolveSearchOutputType(opts, hasSchemaOption);
+  const hasSchemaOption = hasStructuredSchemaOption(opts);
+  const outputType = resolveStructuredOutputType(opts, {
+    disallowedSchemaOutputType: 'searchResults',
+    disallowedSchemaOutputTypeMessage:
+      '--schema/--schema-file cannot be used with --output search-results',
+  });
   const effectiveOpts = { ...opts, outputType };
   addIgnoredOptionWarnings(effectiveOpts, hasSchemaOption, warnings);
   const extraParams = buildSearchExtraParams(effectiveOpts);
@@ -119,23 +130,8 @@ export function buildSearchParams(query: string, opts: SearchCliOptions): BuildS
   };
 }
 
-function resolveSearchOutputType(
-  opts: SearchCliOptions,
-  hasSchemaOption: boolean,
-): SearchOutputType {
-  if (!hasSchemaOption) {
-    return opts.outputType;
-  }
-
-  if (opts.outputType === 'searchResults') {
-    throw new Error('--schema/--schema-file cannot be used with --output search-results');
-  }
-
-  if (opts.outputType === 'sourcedAnswer' && !opts.outputTypeExplicit) {
-    return 'structured';
-  }
-
-  return opts.outputType;
+export function buildSearchTaskRequest(params: SearchParams): TaskRequest {
+  return { input: params, type: 'search' };
 }
 
 function addIgnoredOptionWarnings(
@@ -143,9 +139,7 @@ function addIgnoredOptionWarnings(
   hasSchemaOption: boolean,
   warnings: string[],
 ): void {
-  if (opts.outputType !== 'structured' && hasSchemaOption) {
-    warnings.push(SCHEMA_IGNORED_WARNING);
-  }
+  addSchemaIgnoredWarning(opts.outputType, hasSchemaOption, warnings);
 
   if (opts.outputType !== 'searchResults' && opts.includeImages) {
     warnings.push('Warning: --include-images ignored (only used with --output search-results)');
@@ -189,11 +183,20 @@ async function runSearch(
       console.error(warning);
     }
 
-    const response = await client.search(params);
-    const lines = json ? formatJson(response) : formatSearch(params.outputType, response);
-    printLines(lines);
+    await runAsyncTaskFlow({
+      async: options.async,
+      buildRequest: buildSearchTaskRequest,
+      client,
+      formatSync: response => formatSearch(params.outputType, response),
+      json,
+      params,
+      pollIntervalSeconds: options.pollInterval,
+      runSync: searchParams => client.search(searchParams),
+      timeoutSeconds: options.timeout,
+      wait: options.wait,
+    });
   } catch (error) {
-    exitWithError(formatErrorLine(error));
+    exitWithError(options.async ? formatTaskErrorLine(error) : formatErrorLine(error));
   }
 }
 
@@ -237,6 +240,10 @@ export function registerSearchCommand(program: Command): void {
     .option('--max-results <number>', 'Maximum number of search results', parsePositiveInt)
     .option('-c, --clipboard', 'Read query from clipboard')
     .option('-f, --file <path>', 'Read query from a file')
+    .option('--async', 'Run the search as an asynchronous task')
+    .option('-w, --wait', 'Wait for the asynchronous task to complete and print the result')
+    .addOption(createPollIntervalOption())
+    .addOption(createTimeoutOption())
     .addHelpText(
       'after',
       `
@@ -246,6 +253,7 @@ Examples:
   linkup search "query" --depth deep
   linkup search "query" --output search-results --max-results 10
   linkup search "query" --output structured --schema-file schema.json
+  linkup search "query" --async --wait
   echo "query" | linkup search
 `,
     )

@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
+import { DEFAULT_POLL_INTERVAL_SECONDS } from '../commands/async-task';
 
 const bin = join(__dirname, '../../bin/linkup.js');
 const TEST_API_KEY = 'test-api-key-abcdefghijklmnop';
@@ -71,6 +72,8 @@ describe('linkup CLI', () => {
     expect(output).toContain('--to-date');
     expect(output).toContain('--include-images');
     expect(output).toContain('--max-results');
+    expect(output).toContain('--async');
+    expect(output).toContain('-w, --wait');
     expect(output).toContain('Examples:');
   });
 
@@ -129,6 +132,8 @@ describe('linkup CLI', () => {
     expect(output).toContain('--render-js');
     expect(output).toContain('--include-raw-html');
     expect(output).toContain('--extract-images');
+    expect(output).toContain('--async');
+    expect(output).toContain('-w, --wait');
     expect(output).toContain('Examples:');
   });
 
@@ -149,6 +154,28 @@ describe('linkup CLI', () => {
     expect(output).toContain('logout');
   });
 
+  it('tasks exposes create, get, and list subcommands', () => {
+    const output = execFileSync('node', [bin, 'tasks', '--help']).toString();
+    expect(output).toContain('create');
+    expect(output).toContain('get');
+    expect(output).toContain('list');
+  });
+
+  it('tasks list rejects invalid status filters', () => {
+    const { status, stderr } = runCli(['tasks', 'list', '--status', 'queued']);
+    expect(status).not.toBe(0);
+    expect(stderr).toMatch(/invalid status|queued/i);
+  });
+
+  it('tasks create requires file or stdin input', () => {
+    const { status, stderr } = runCli(['tasks', 'create'], {
+      ...process.env,
+      LINKUP_API_KEY: TEST_API_KEY,
+    });
+    expect(status).toBe(1);
+    expect(stderr).toMatch(/No tasks provided|Tasks JSON is empty/);
+  });
+
   it('research --help lists output, mode, reasoning, and wait options', () => {
     const output = execFileSync('node', [bin, 'research', '--help']).toString();
     expect(output).toContain('"sourced-answer"');
@@ -158,7 +185,7 @@ describe('linkup CLI', () => {
     expect(output).toContain('default: "L"');
     expect(output).toContain('-w, --wait');
     expect(output).toContain('--poll-interval');
-    expect(output).toContain('default: 10');
+    expect(output).toContain(`default: ${DEFAULT_POLL_INTERVAL_SECONDS}`);
     expect(output).toContain('--timeout');
     expect(output).toContain('default: 1200 (20 minutes)');
     expect(output).toContain('Examples:');

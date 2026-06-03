@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { readStdin } from '../utils';
 import { type ClipboardResult, readClipboard } from './clipboard';
 
 export type QueryInput = {
@@ -21,14 +22,6 @@ export type QueryReaders = {
   stdin: () => Promise<string>;
   interactive: () => Promise<InteractiveResult>;
 };
-
-async function readStdin(): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk as Buffer);
-  }
-  return Buffer.concat(chunks).toString('utf8');
-}
 
 async function readInteractive(): Promise<InteractiveResult> {
   try {

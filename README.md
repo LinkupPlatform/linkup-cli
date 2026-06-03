@@ -124,7 +124,7 @@ linkup research "..." --wait
 linkup research get <id> --wait
 ```
 
-While waiting, a progress indicator is shown on stderr so piped stdout stays clean. Tune the polling loop with `--poll-interval <seconds>` (default 10) and `--timeout <seconds>` (default 1200, 20 minutes). On timeout the task keeps running on the server; the CLI prints the id so you can resume with `linkup research get <id> --wait`.
+While waiting, a progress indicator is shown on stderr so piped stdout stays clean. Tune the polling loop with `--poll-interval <seconds>` (default 5) and `--timeout <seconds>` (default 1200, 20 minutes). On timeout the task keeps running on the server; the CLI prints the id so you can resume with `linkup research get <id> --wait`.
 
 Research options:
 
@@ -185,6 +185,72 @@ Or block until completion in a single step and consume the JSON result directly:
 linkup --json research "your question" --wait | jq '.output.answer'
 ```
 
+### Tasks
+
+Tasks expose the generic asynchronous API for batching and managing `search`, `fetch`, and `research` work. Keep using `linkup research` for a simple single research task; use `linkup tasks` when you want mixed batches, unified lookup, filters, or queue visibility.
+
+Create tasks from a JSON file or stdin:
+
+```bash
+linkup tasks create --file tasks.json
+cat tasks.json | linkup tasks create
+linkup tasks create --file tasks.json --wait
+```
+
+`tasks.json` may contain one task object or an array of task objects. This batch format uses the SDK's camelCase field names:
+
+```json
+[
+  {
+    "type": "search",
+    "input": {
+      "query": "Linkup latest product updates",
+      "depth": "deep",
+      "outputType": "sourcedAnswer"
+    }
+  },
+  {
+    "type": "fetch",
+    "input": {
+      "url": "https://docs.linkup.so"
+    }
+  },
+  {
+    "type": "research",
+    "input": {
+      "query": "Semiconductor market in 2026",
+      "outputType": "sourcedAnswer"
+    }
+  }
+]
+```
+
+Fetch or wait for any task type:
+
+```bash
+linkup tasks get <id>
+linkup tasks get <id> --wait
+```
+
+List tasks, including queue usage:
+
+```bash
+linkup tasks list
+linkup tasks list --status pending,processing
+linkup tasks list --type search,research
+linkup tasks list --page 1 --page-size 20 --sort-by createdAt --sort-direction desc
+```
+
+`tasks list` prints queue usage on stderr so stdout remains pipe-friendly. The current SDK does not expose task cancel or delete operations.
+
+For single `search` or `fetch` calls, add `--async` to enqueue the same request as a task:
+
+```bash
+linkup search "query" --depth deep --async
+linkup search "query" --async --wait
+linkup fetch https://example.com --async --wait
+```
+
 ### JSON output
 
 Use `--json` to print the raw API response as pretty-printed JSON:
@@ -194,6 +260,7 @@ linkup --json search "query"
 linkup -j fetch https://example.com
 linkup --json fetch https://example.com
 linkup --json research "query" --wait
+linkup --json tasks list
 ```
 
 ### Config
