@@ -7,7 +7,6 @@ import { registerResearchCommand } from './commands/research';
 import { registerSearchCommand } from './commands/search';
 import { registerSetupCommand } from './commands/setup';
 import { registerTasksCommand } from './commands/tasks';
-import { applyImplicitSearch, collectKnownCommands } from './implicit-search';
 import { exitWithError, formatErrorLine } from './output/errors';
 
 const program = new Command();
@@ -21,7 +20,7 @@ program
     'after',
     `
 Examples:
-  linkup "What is the capital of France?"
+  linkup search "What is the capital of France?"
   linkup search "latest AI search news" --depth fast
   linkup fetch https://example.com --json
   linkup research "State of the semiconductor market in 2026" --wait
@@ -41,7 +40,7 @@ program.action(() => program.help());
 async function main(): Promise<void> {
   // Commander reserves -V by default; keep this CLI's documented -v alias working case-insensitively.
   const argv = process.argv.map((arg, index) => (index === 2 && arg === '-V' ? '--version' : arg));
-  await program.parseAsync(applyImplicitSearch(argv, collectKnownCommands(program)));
+  await program.parseAsync(argv);
 }
 
 main().catch(error => {

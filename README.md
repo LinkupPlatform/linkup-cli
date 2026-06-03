@@ -47,14 +47,6 @@ Global flags can be placed before or after a command. Short command aliases are 
 
 ```bash
 linkup search "What is the capital of France?"
-linkup "What is the capital of France?" # implicit search
-```
-
-Implicit search works when the query is the first argument. Put search options after the query, or use the explicit `search` command when starting with flags:
-
-```bash
-linkup "query" --depth deep
-linkup search --depth deep "query"
 ```
 
 Search options:
