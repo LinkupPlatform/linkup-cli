@@ -1,17 +1,18 @@
+import type { Command } from 'commander';
 import { LinkupClient } from 'linkup-sdk';
-import { resolveConfig, validateApiKey } from './config';
+import { resolveConfig } from './config';
 import { exitWithError } from './output/errors';
 
-export function getClient(apiKeyOverride?: string): LinkupClient {
-  const normalizedOverride = apiKeyOverride?.trim();
-  if (normalizedOverride) {
-    const validationError = validateApiKey(normalizedOverride);
-    if (validationError) {
-      exitWithError(`Error: ${validationError}`);
-    }
-    return new LinkupClient({ apiKey: normalizedOverride });
-  }
+export type GlobalOptions = {
+  json?: boolean;
+};
 
+export type ResolvedGlobals = {
+  client: LinkupClient;
+  json: boolean;
+};
+
+export function getClient(): LinkupClient {
   const { apiKey } = resolveConfig();
   if (!apiKey) {
     exitWithError([
@@ -22,4 +23,12 @@ export function getClient(apiKeyOverride?: string): LinkupClient {
   }
 
   return new LinkupClient({ apiKey });
+}
+
+export function resolveGlobals(command: Command): ResolvedGlobals {
+  const globalOptions = command.optsWithGlobals<GlobalOptions>();
+  return {
+    client: getClient(),
+    json: Boolean(globalOptions.json),
+  };
 }

@@ -93,16 +93,11 @@ describe('resolveQuery', () => {
     expect(result.query).toBe('');
   });
 
-  it('honors source priority: clipboard wins over file and args', async () => {
+  it('rejects multiple explicit query sources', async () => {
     const readers: QueryReaders = { ...stubReaders, clipboard: () => ({ text: 'from clipboard' }) };
 
-    const result = await resolveQuery(
-      { args: ['from', 'args'], clipboard: true, file: '/ignored' },
-      readers,
-      true,
-    );
-
-    expect(result.query).toBe('from clipboard');
-    expect(result.notices).toContain('Warning: multiple query sources provided; using --clipboard');
+    await expect(
+      resolveQuery({ args: ['from', 'args'], clipboard: true, file: '/ignored' }, readers, true),
+    ).rejects.toThrow('Multiple query sources provided: --clipboard, --file, positional query');
   });
 });

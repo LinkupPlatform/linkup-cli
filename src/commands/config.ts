@@ -1,14 +1,13 @@
 import type { Command } from 'commander';
 import { resolveConfig } from '../config';
 import { formatConfig } from '../output/config';
+import { printLines } from '../output/errors';
 
 function runConfig(): void {
   const resolved = resolveConfig();
-  for (const line of formatConfig(resolved)) {
-    console.log(line);
-  }
+  printLines(formatConfig(resolved));
 }
 
 export function registerConfigCommand(program: Command): void {
-  program.command('config').alias('c').description('Show configuration').action(runConfig);
+  program.command('config').description('Show configuration').action(runConfig);
 }

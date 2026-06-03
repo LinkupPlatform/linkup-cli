@@ -93,7 +93,7 @@ export function getApiKey(configPath: string = getConfigPath()): string | null {
 export function validateApiKey(apiKey: string): string | null {
   const normalized = apiKey.trim();
   if (!normalized || normalized.length < MIN_API_KEY_LENGTH || /[\r\n]/.test(apiKey)) {
-    return 'Invalid API key: must be at least 10 characters and single-line.';
+    return `Invalid API key: must be at least ${MIN_API_KEY_LENGTH} characters and single-line.`;
   }
   return null;
 }
@@ -142,7 +142,7 @@ export function clearApiKey(configPath: string = getConfigPath()): boolean {
   return true;
 }
 
-export function maskApiKey(key: string): string | null {
+export function maskApiKey(key: string): string {
   const minLength = 12;
   const prefixLength = 8;
   const suffixLength = 4;
@@ -150,5 +150,5 @@ export function maskApiKey(key: string): string | null {
   if (key.length > minLength) {
     return `${key.slice(0, prefixLength)}...${key.slice(-suffixLength)}`;
   }
-  return null;
+  return '*'.repeat(Math.max(key.length, MIN_API_KEY_LENGTH));
 }

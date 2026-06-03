@@ -1,15 +1,9 @@
 import type { Command } from 'commander';
 import { LinkupClient } from 'linkup-sdk';
 import { getConfigPath, saveApiKey, validateApiKey } from '../config';
-import { exitWithCode, exitWithError, formatError, formatErrorLine } from '../output/errors';
+import { exitWithCode, exitWithError, formatError } from '../output/errors';
 
 const SETUP_URL = 'https://app.linkup.so';
-
-/** Validate the pasted key. Returns an error message, or null when the key is acceptable. */
-export function validateSetupKey(apiKey: string): string | null {
-  const validationError = validateApiKey(apiKey);
-  return validationError;
-}
 
 async function runSetup(): Promise<void> {
   console.log("Welcome to Linkup CLI! Let's get you set up.\n");
@@ -34,7 +28,7 @@ async function runSetup(): Promise<void> {
     exitWithCode(0);
   }
 
-  const validationError = validateSetupKey(apiKey);
+  const validationError = validateApiKey(apiKey);
   if (validationError) {
     exitWithError(`Error: ${validationError}`);
   }
@@ -44,7 +38,7 @@ async function runSetup(): Promise<void> {
     saveApiKey(apiKey);
     console.log(`API key saved to ${getConfigPath()}`);
   } catch (error) {
-    exitWithError(formatErrorLine(`Saving config failed: ${formatError(error)}`));
+    exitWithError(`Error: Saving config failed: ${formatError(error)}`);
   }
 
   console.log('\nStep 3: Test connection');

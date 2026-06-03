@@ -11,6 +11,12 @@ export function formatErrorLine(error: unknown): string {
   return `Error: ${formatError(error)}`;
 }
 
+export function printLines(lines: string[]): void {
+  for (const line of lines) {
+    console.log(line);
+  }
+}
+
 export function exitWithError(lines: string | string[], code = 1): never {
   for (const line of Array.isArray(lines) ? lines : [lines]) {
     console.error(line);

@@ -173,10 +173,10 @@ describe('maskApiKey', () => {
     expect(maskApiKey('abcdefghijklmnop')).toBe('abcdefgh...mnop');
   });
 
-  it('returns null for keys of 12 characters or fewer', () => {
-    expect(maskApiKey('123456789012')).toBeNull();
-    expect(maskApiKey('short')).toBeNull();
-    expect(maskApiKey('')).toBeNull();
+  it('fully masks keys of 12 characters or fewer', () => {
+    expect(maskApiKey('123456789012')).toBe('************');
+    expect(maskApiKey('short')).toBe('**********');
+    expect(maskApiKey('')).toBe('**********');
   });
 });
 

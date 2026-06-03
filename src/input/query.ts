@@ -35,8 +35,11 @@ async function readInteractive(): Promise<InteractiveResult> {
     const { input } = await import('@inquirer/prompts');
     const text = await input({ message: 'Enter your query:' });
     return { cancelled: false, text };
-  } catch {
-    return { cancelled: true, text: '' };
+  } catch (error) {
+    if (error instanceof Error && ['AbortPromptError', 'ExitPromptError'].includes(error.name)) {
+      return { cancelled: true, text: '' };
+    }
+    throw error;
   }
 }
 
@@ -46,7 +49,7 @@ export const defaultReaders: QueryReaders = {
   stdin: readStdin,
 };
 
-function addSourceConflictWarnings(input: QueryInput, notices: string[]): void {
+function assertSingleQuerySource(input: QueryInput): void {
   const sources = [
     input.clipboard ? '--clipboard' : null,
     input.file ? '--file' : null,
@@ -54,13 +57,13 @@ function addSourceConflictWarnings(input: QueryInput, notices: string[]): void {
   ].filter((source): source is string => source !== null);
 
   if (sources.length > 1) {
-    notices.push(`Warning: multiple query sources provided; using ${sources[0]}`);
+    throw new Error(`Multiple query sources provided: ${sources.join(', ')}. Use only one.`);
   }
 }
 
 /**
- * Resolve the search query by source priority:
- * clipboard → file → positional args → piped stdin → interactive prompt.
+ * Resolve the search query from one source:
+ * clipboard, file, positional args, piped stdin, or interactive prompt.
  *
  * Throws on hard failures (clipboard tool missing/empty, unreadable file).
  * Returns an empty `query` when nothing resolved (caller prints usage), or
@@ -72,7 +75,7 @@ export async function resolveQuery(
   isStdinTTY: boolean = Boolean(process.stdin.isTTY),
 ): Promise<ResolvedQuery> {
   const notices: string[] = [];
-  addSourceConflictWarnings(input, notices);
+  assertSingleQuerySource(input);
 
   if (input.clipboard) {
     const result = readers.clipboard();

@@ -1,11 +1,18 @@
-import { readFileSync } from 'node:fs';
-import { Command, InvalidArgumentError, Option } from 'commander';
+import { Command, Option } from 'commander';
 import type { SearchDepth, SearchParams } from 'linkup-sdk';
-import { getClient } from '../client';
-import { resolveQuery } from '../input/query';
-import { exitWithError, formatErrorLine } from '../output/errors';
+import { resolveGlobals } from '../client';
+import { exitWithError, formatErrorLine, printLines } from '../output/errors';
 import { formatJson } from '../output/json';
 import { formatSearch } from '../output/search';
+import { parseDateOption, parseDomainList, parsePositiveInt } from './option-parsers';
+import { queryUsageLines, resolveQueryOrExit } from './query-input';
+import {
+  buildCommonParams,
+  isOptionExplicit,
+  loadStructuredSchema,
+  SCHEMA_IGNORED_WARNING,
+  STRUCTURED_REQUIRES_SCHEMA,
+} from './shared-params';
 
 export type SearchOutputType = 'sourcedAnswer' | 'searchResults' | 'structured';
 export type SearchCliOutputType = 'sourced-answer' | 'search-results' | 'structured';
@@ -13,6 +20,7 @@ export type SearchCliOutputType = 'sourced-answer' | 'search-results' | 'structu
 export type SearchCliOptions = {
   depth: SearchDepth;
   outputType: SearchOutputType;
+  outputTypeExplicit?: boolean;
   schemaFile?: string;
   schema?: string;
   includeDomains?: string[];
@@ -57,12 +65,10 @@ type SearchCommandOptions = {
   file?: string;
 };
 
-type SearchGlobalOptions = {
-  apiKey?: string;
-  json?: boolean;
-};
-
-function toSearchCliOptions(options: SearchCommandOptions): SearchCliOptions {
+function toSearchCliOptions(
+  options: SearchCommandOptions,
+  outputTypeExplicit: boolean,
+): SearchCliOptions {
   return {
     depth: options.depth,
     excludeDomains: options.excludeDomains,
@@ -71,103 +77,32 @@ function toSearchCliOptions(options: SearchCommandOptions): SearchCliOptions {
     includeImages: options.includeImages,
     maxResults: options.maxResults,
     outputType: OUTPUT_TYPE_MAP[options.output],
+    outputTypeExplicit,
     schema: options.schema,
     schemaFile: options.schemaFile,
     toDate: options.toDate,
   };
 }
 
-function parseDomainList(value: string, previous: string[] = []): string[] {
-  const domains = value
-    .split(',')
-    .map(domain => domain.trim())
-    .filter(Boolean);
-
-  if (domains.length === 0) {
-    throw new InvalidArgumentError('must include at least one domain');
-  }
-
-  return [...previous, ...domains];
-}
-
-function parseMaxResults(value: string): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new InvalidArgumentError('must be a positive integer');
-  }
-  return parsed;
-}
-
-function parseDateOption(optionName: string): (value: string) => Date {
-  return (value: string): Date => {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      throw new InvalidArgumentError(`${optionName} must be a valid date`);
-    }
-
-    return date;
-  };
-}
-
-function readSchemaRaw(opts: SearchCliOptions): string {
-  if (opts.schemaFile) {
-    try {
-      return readFileSync(opts.schemaFile, 'utf8');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Could not read schema file: ${message}`);
-    }
-  }
-  return opts.schema ?? '';
-}
-
-function parseSchemaJson(raw: string): Record<string, unknown> {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (error) {
-    const message = error instanceof SyntaxError ? error.message : String(error);
-    throw new Error(`Schema is not valid JSON: ${message}`);
-  }
-
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    throw new Error('Schema must be a JSON object');
-  }
-
-  return parsed as Record<string, unknown>;
-}
-
 export function buildSearchParams(query: string, opts: SearchCliOptions): BuildSearchParamsResult {
   const warnings: string[] = [];
   const hasSchemaOption = Boolean(opts.schemaFile || opts.schema);
-  addIgnoredOptionWarnings(opts, hasSchemaOption, warnings);
-  const extraParams = buildSearchExtraParams(opts);
+  const outputType = resolveSearchOutputType(opts, hasSchemaOption);
+  const effectiveOpts = { ...opts, outputType };
+  addIgnoredOptionWarnings(effectiveOpts, hasSchemaOption, warnings);
+  const extraParams = buildSearchExtraParams(effectiveOpts);
 
-  if (opts.outputType === 'structured') {
+  if (outputType === 'structured') {
     if (!hasSchemaOption) {
-      throw new Error('--output structured requires --schema-file or --schema');
+      throw new Error(STRUCTURED_REQUIRES_SCHEMA);
     }
-    const raw = readSchemaRaw(opts);
-    const structuredOutputSchema = parseSchemaJson(raw);
     return {
       params: {
         depth: opts.depth,
         ...extraParams,
         outputType: 'structured',
         query,
-        structuredOutputSchema,
-      },
-      warnings,
-    };
-  }
-
-  if (opts.outputType === 'searchResults') {
-    return {
-      params: {
-        depth: opts.depth,
-        ...extraParams,
-        outputType: 'searchResults',
-        query,
+        structuredOutputSchema: loadStructuredSchema(opts),
       },
       warnings,
     };
@@ -177,11 +112,30 @@ export function buildSearchParams(query: string, opts: SearchCliOptions): BuildS
     params: {
       depth: opts.depth,
       ...extraParams,
-      outputType: 'sourcedAnswer',
+      outputType,
       query,
     },
     warnings,
   };
+}
+
+function resolveSearchOutputType(
+  opts: SearchCliOptions,
+  hasSchemaOption: boolean,
+): SearchOutputType {
+  if (!hasSchemaOption) {
+    return opts.outputType;
+  }
+
+  if (opts.outputType === 'searchResults') {
+    throw new Error('--schema/--schema-file cannot be used with --output search-results');
+  }
+
+  if (opts.outputType === 'sourcedAnswer' && !opts.outputTypeExplicit) {
+    return 'structured';
+  }
+
+  return opts.outputType;
 }
 
 function addIgnoredOptionWarnings(
@@ -190,7 +144,7 @@ function addIgnoredOptionWarnings(
   warnings: string[],
 ): void {
   if (opts.outputType !== 'structured' && hasSchemaOption) {
-    warnings.push('Warning: --schema/--schema-file ignored (only used with --output structured)');
+    warnings.push(SCHEMA_IGNORED_WARNING);
   }
 
   if (opts.outputType !== 'searchResults' && opts.includeImages) {
@@ -203,30 +157,12 @@ function addIgnoredOptionWarnings(
 }
 
 function buildSearchExtraParams(opts: SearchCliOptions): Partial<SearchParams> {
-  if (opts.fromDate && opts.toDate && opts.fromDate > opts.toDate) {
-    throw new Error('--from-date must be before or equal to --to-date');
-  }
-
   return {
-    ...(opts.excludeDomains?.length && { excludeDomains: opts.excludeDomains }),
-    ...(opts.fromDate && { fromDate: opts.fromDate }),
-    ...(opts.includeDomains?.length && { includeDomains: opts.includeDomains }),
+    ...buildCommonParams(opts),
     ...(opts.outputType === 'searchResults' && opts.includeImages && { includeImages: true }),
     ...(opts.outputType === 'searchResults' &&
       opts.maxResults !== undefined && { maxResults: opts.maxResults }),
-    ...(opts.toDate && { toDate: opts.toDate }),
   };
-}
-
-function searchUsageLines(): string[] {
-  return [
-    'Error: No query provided',
-    'Usage:',
-    '  linkup search "your query"',
-    '  linkup search --clipboard        # read from clipboard',
-    '  linkup search --file query.txt   # read from file',
-    '  linkup search                    # interactive mode',
-  ];
 }
 
 async function runSearch(
@@ -234,47 +170,28 @@ async function runSearch(
   options: SearchCommandOptions,
   command: Command,
 ): Promise<void> {
-  const globalOptions = command.optsWithGlobals<SearchGlobalOptions>();
-  const client = getClient(globalOptions.apiKey);
+  const { client, json } = resolveGlobals(command);
 
-  let resolved: Awaited<ReturnType<typeof resolveQuery>>;
-  try {
-    resolved = await resolveQuery({
+  const query = await resolveQueryOrExit(
+    {
       args: queryParts,
       clipboard: options.clipboard,
       file: options.file,
-    });
-  } catch (error) {
-    exitWithError(formatErrorLine(error));
-  }
-
-  if (resolved.cancelled) {
-    exitWithError('Cancelled', 0);
-  }
-
-  if (!resolved.query) {
-    exitWithError(searchUsageLines());
-  }
-
-  for (const notice of resolved.notices) {
-    console.error(notice);
-  }
+    },
+    queryUsageLines('search', 'your query'),
+  );
 
   try {
-    const cliOptions = toSearchCliOptions(options);
-    const { params, warnings } = buildSearchParams(resolved.query, cliOptions);
+    const cliOptions = toSearchCliOptions(options, isOptionExplicit(command, 'output'));
+    const { params, warnings } = buildSearchParams(query, cliOptions);
 
     for (const warning of warnings) {
       console.error(warning);
     }
 
     const response = await client.search(params);
-    const lines = globalOptions.json
-      ? formatJson(response)
-      : formatSearch(cliOptions.outputType, response);
-    for (const line of lines) {
-      console.log(line);
-    }
+    const lines = json ? formatJson(response) : formatSearch(params.outputType, response);
+    printLines(lines);
   } catch (error) {
     exitWithError(formatErrorLine(error));
   }
@@ -298,9 +215,12 @@ export function registerSearchCommand(program: Command): void {
     .addOption(outputOption)
     .option(
       '--schema-file <path>',
-      'Path to a JSON schema file (required with --output structured)',
+      'Path to a JSON schema file (implies --output structured unless --output is set)',
     )
-    .option('--schema <json>', 'Inline JSON schema string (required with --output structured)')
+    .option(
+      '--schema <json>',
+      'Inline JSON schema string (implies --output structured unless --output is set)',
+    )
     .option('--include-domains <domains>', 'Comma-separated domains to include', parseDomainList)
     .option('--exclude-domains <domains>', 'Comma-separated domains to exclude', parseDomainList)
     .option(
@@ -314,7 +234,7 @@ export function registerSearchCommand(program: Command): void {
       parseDateOption('--to-date'),
     )
     .option('--include-images', 'Request images in search results')
-    .option('--max-results <number>', 'Maximum number of search results', parseMaxResults)
+    .option('--max-results <number>', 'Maximum number of search results', parsePositiveInt)
     .option('-c, --clipboard', 'Read query from clipboard')
     .option('-f, --file <path>', 'Read query from a file')
     .addHelpText(

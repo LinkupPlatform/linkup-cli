@@ -48,8 +48,8 @@ describe('linkup CLI', () => {
   it('--help exits 0 and mentions linkup', () => {
     const output = execFileSync('node', [bin, '--help']).toString();
     expect(output).toContain('linkup');
-    expect(output).toContain('--api-key');
-    expect(output).toContain('--json');
+    expect(output).not.toContain('--api-key');
+    expect(output).toContain('-j, --json');
     expect(output).toContain('Examples:');
   });
 
@@ -147,5 +147,63 @@ describe('linkup CLI', () => {
   it('lists logout in root help', () => {
     const output = execFileSync('node', [bin, '--help']).toString();
     expect(output).toContain('logout');
+  });
+
+  it('research --help lists output, mode, reasoning, and wait options', () => {
+    const output = execFileSync('node', [bin, 'research', '--help']).toString();
+    expect(output).toContain('"sourced-answer"');
+    expect(output).toContain('"structured"');
+    expect(output).toContain('-m, --mode');
+    expect(output).toContain('--reasoning-depth');
+    expect(output).toContain('default: "L"');
+    expect(output).toContain('-w, --wait');
+    expect(output).toContain('--poll-interval');
+    expect(output).toContain('default: 10');
+    expect(output).toContain('--timeout');
+    expect(output).toContain('default: 1200 (20 minutes)');
+    expect(output).toContain('Examples:');
+    expect(output).not.toContain('--reasoning-depth L');
+  });
+
+  it('research --help lists clipboard and file query sources', () => {
+    const output = execFileSync('node', [bin, 'research', '--help']).toString();
+    expect(output).toContain('--clipboard');
+    expect(output).toContain('--file');
+  });
+
+  it('research exposes get and list subcommands', () => {
+    const output = execFileSync('node', [bin, 'research', '--help']).toString();
+    expect(output).toContain('get');
+    expect(output).toContain('list');
+  });
+
+  it('research requires a schema for structured output', () => {
+    const { status, stderr } = runCli(['research', 'q', '--output', 'structured'], {
+      ...process.env,
+      LINKUP_API_KEY: TEST_API_KEY,
+    });
+    expect(status).toBe(1);
+    expect(stderr).toContain('--output structured requires --schema-file or --schema');
+  });
+
+  it('research prints usage when no query is provided', () => {
+    const { status, stderr } = runCli(['research'], {
+      ...process.env,
+      LINKUP_API_KEY: TEST_API_KEY,
+    });
+    expect(status).toBe(1);
+    expect(stderr).toContain('No query provided');
+  });
+
+  it('research rejects invalid --mode', () => {
+    const { status, stderr } = runCli(['research', 'q', '--mode', 'turbo']);
+    expect(status).not.toBe(0);
+    expect(stderr).toMatch(/mode|turbo|choice/i);
+  });
+
+  it('research get requires an id argument', () => {
+    const { status, stderr } = runCli(['research', 'get']);
+    expect(status).not.toBe(0);
+    expect(stderr).toMatch(/id|argument|missing/i);
   });
 });

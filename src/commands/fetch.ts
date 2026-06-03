@@ -1,7 +1,7 @@
 import { type Command, InvalidArgumentError } from 'commander';
 import type { FetchParams } from 'linkup-sdk';
-import { getClient } from '../client';
-import { exitWithError, formatErrorLine } from '../output/errors';
+import { resolveGlobals } from '../client';
+import { exitWithError, formatErrorLine, printLines } from '../output/errors';
 import { formatFetch } from '../output/fetch';
 import { formatJson } from '../output/json';
 
@@ -9,11 +9,6 @@ export type FetchCommandOptions = {
   renderJs?: boolean;
   includeRawHtml?: boolean;
   extractImages?: boolean;
-};
-
-type FetchGlobalOptions = {
-  apiKey?: string;
-  json?: boolean;
 };
 
 function parseFetchUrl(value: string): string {
@@ -40,13 +35,10 @@ async function runFetch(
   command: Command,
 ): Promise<void> {
   try {
-    const globalOptions = command.optsWithGlobals<FetchGlobalOptions>();
-    const client = getClient(globalOptions.apiKey);
+    const { client, json } = resolveGlobals(command);
     const response = await client.fetch(buildFetchParams(url, options));
-    const lines = globalOptions.json ? formatJson(response) : formatFetch(response);
-    for (const line of lines) {
-      console.log(line);
-    }
+    const lines = json ? formatJson(response) : formatFetch(response);
+    printLines(lines);
   } catch (error) {
     exitWithError(formatErrorLine(error));
   }

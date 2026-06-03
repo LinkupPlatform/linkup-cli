@@ -27,6 +27,7 @@
   ],
   "main": "dist/src/cli.js",
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsc",
     "lint": "biome check",
     "lint:fix": "biome check --write",

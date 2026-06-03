@@ -47,7 +47,7 @@ describe('formatConfig', () => {
     expect(lines).toContain("Run 'linkup setup' to configure your API key");
   });
 
-  it('shows (not set) for keys too short to mask', () => {
+  it('shows a masked placeholder for keys too short to partially mask', () => {
     const resolved: ResolvedConfig = {
       apiKey: 'shortkey',
       configPath: CONFIG_PATH,
@@ -57,6 +57,6 @@ describe('formatConfig', () => {
 
     const lines = formatConfig(resolved);
 
-    expect(lines).toContain('API Key      (not set)');
+    expect(lines).toContain('API Key      **********');
   });
 });

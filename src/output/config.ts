@@ -5,10 +5,10 @@ const SETUP_HINT = "Run 'linkup setup' to configure your API key";
 
 /** Render the resolved configuration as aligned, printable lines (no I/O). */
 export function formatConfig(resolved: ResolvedConfig): string[] {
-  const maskedKey = resolved.apiKey ? maskApiKey(resolved.apiKey) : null;
+  const maskedKey = resolved.apiKey ? maskApiKey(resolved.apiKey) : NOT_SET;
 
   const rows: Array<[string, string]> = [
-    ['API Key', maskedKey ?? NOT_SET],
+    ['API Key', maskedKey],
     ['Source', resolved.sourceLabel],
     ['Config File', resolved.configPath],
   ];

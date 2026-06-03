@@ -135,10 +135,27 @@ describe('buildSearchParams', () => {
     ).toThrow('--from-date must be before or equal to --to-date');
   });
 
-  it('warns when schema is provided without structured output', () => {
+  it('infers structured output when schema is provided with the default output', () => {
     const { params, warnings } = buildSearchParams('q', {
       depth: 'standard',
       outputType: 'sourcedAnswer',
+      schema: '{"type":"object"}',
+    });
+
+    expect(params).toEqual({
+      depth: 'standard',
+      outputType: 'structured',
+      query: 'q',
+      structuredOutputSchema: { type: 'object' },
+    });
+    expect(warnings).toEqual([]);
+  });
+
+  it('warns when schema is provided with an explicit sourced-answer output', () => {
+    const { params, warnings } = buildSearchParams('q', {
+      depth: 'standard',
+      outputType: 'sourcedAnswer',
+      outputTypeExplicit: true,
       schema: '{"type":"object"}',
     });
 
@@ -150,6 +167,16 @@ describe('buildSearchParams', () => {
     expect(warnings).toContain(
       'Warning: --schema/--schema-file ignored (only used with --output structured)',
     );
+  });
+
+  it('rejects schema with search-results output', () => {
+    expect(() =>
+      buildSearchParams('q', {
+        depth: 'standard',
+        outputType: 'searchResults',
+        schema: '{"type":"object"}',
+      }),
+    ).toThrow('--schema/--schema-file cannot be used with --output search-results');
   });
 
   it('warns and omits search-result-only options for sourced answers', () => {
