@@ -1,7 +1,12 @@
 import type { Command } from 'commander';
+import { resolveConfig } from '../config';
+import { formatConfig } from '../output/config';
 
 function runConfig(): void {
-  console.error('Config is not implemented yet.');
+  const resolved = resolveConfig();
+  for (const line of formatConfig(resolved)) {
+    console.log(line);
+  }
 }
 
 export function registerConfigCommand(program: Command): void {
