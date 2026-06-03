@@ -1,5 +1,11 @@
 import { Command } from 'commander';
 import { version } from '../package.json';
+import { registerConfigCommand } from './commands/config';
+import { registerFetchCommand } from './commands/fetch';
+import { registerSearchCommand } from './commands/search';
+import { registerSetupCommand } from './commands/setup';
+import { applyImplicitSearch } from './implicit-search';
+import { reportErrorAndExit } from './output/errors';
 
 const program = new Command();
 
@@ -8,7 +14,17 @@ program
   .description('Linkup CLI — AI-powered web search from your terminal')
   .version(version, '-V, --version');
 
-// Print help when invoked with no subcommand (parity with Python CLI).
+registerSearchCommand(program);
+registerFetchCommand(program);
+registerSetupCommand(program);
+registerConfigCommand(program);
+
 program.action(() => program.help());
 
-program.parse();
+async function main(): Promise<void> {
+  await program.parseAsync(applyImplicitSearch(process.argv));
+}
+
+main().catch(error => {
+  reportErrorAndExit(error);
+});
