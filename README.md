@@ -2,24 +2,39 @@
 
 Official command-line interface for [Linkup](https://linkup.so) — AI-powered web search from your terminal.
 
+## Features
+
+- **Search the web** with three depth modes: `fast`, `standard`, and `deep`.
+- **Fetch** any URL as clean markdown.
+- **Research** asynchronously, and batch mixed jobs with **tasks**.
+- **Scriptable**: `--json` output for any command, plus stdin, file, and clipboard input.
+
 ## Install
 
 ```bash
 npm install -g linkup-cli
 ```
 
+> Requires Node.js >= 22
+
+## Documentation
+
+Find the complete documentation [here](https://docs.linkup.so).
+
 ## Setup
 
-Set your API key interactively or via the environment:
+Get an API key from [app.linkup.so](https://app.linkup.so), then save it interactively or via the environment:
 
 ```bash
 linkup setup
 export LINKUP_API_KEY="your-api-key"   # takes precedence over the saved config
 ```
 
-Run `linkup config` to inspect the resolved key, or `linkup logout` to remove a saved key.
+Run `linkup config` to inspect the resolved key, or `linkup logout` to remove a saved one.
 
-## Commands
+## Usage
+
+Add `--help` to any command for the full list of options. Use `--json` (or `-j`) to print the raw API response for scripting.
 
 ```bash
 linkup search "What is the capital of France?"
@@ -27,11 +42,15 @@ linkup fetch https://example.com
 linkup research "State of the semiconductor market in 2026"
 ```
 
-Add `--help` to any command for the full list of options. Use `--json` (or `-j`) to print the raw API response for scripting.
-
 ### Search
 
-Immediate web search. Control effort with `--depth` (`fast`, `standard`, `deep`) and output with `--output` (`sourced-answer`, `search-results`, `structured`).
+Immediate web search. Pick the effort with `--depth`:
+
+- `fast` — quickest turnaround on lightweight queries.
+- `standard` — fast and straightforward, for everyday questions (default).
+- `deep` — slower agentic search for complex, multi-step questions.
+
+Choose the output with `--output` (`sourced-answer`, `search-results`, `structured`).
 
 ```bash
 linkup search "query" --depth deep
@@ -41,7 +60,7 @@ linkup search "query" --include-domains linkup.so --from-date 2025-01-01
 
 ### Fetch
 
-Extract content from a URL. Use `--render-js` for JS-heavy pages, `--include-raw-html`, or `--extract-images`.
+Extract the content of a URL as markdown. Use `--render-js` for JS-heavy pages, `--include-raw-html`, or `--extract-images`.
 
 ```bash
 linkup fetch https://example.com --render-js
@@ -59,8 +78,6 @@ linkup research list                 # recent tasks
 ```
 
 Control effort with `--mode` (`answer`, `auto`, `investigate`, `research`) and `--reasoning-depth` (`S`, `M`, `L`, `XL`). Tune polling with `--poll-interval` and `--timeout`.
-
-Scripting example:
 
 ```bash
 linkup --json research "your question" --wait | jq '.output.answer'
