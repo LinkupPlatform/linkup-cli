@@ -1,18 +1,18 @@
 import type { Command } from 'commander';
 import { parseSchemaJson, readSchemaRaw, type SchemaInput } from '../input/schema';
 
-export const SCHEMA_IGNORED_WARNING =
+const SCHEMA_IGNORED_WARNING =
   'Warning: --schema/--schema-file ignored (only used with --output structured)';
 export const STRUCTURED_REQUIRES_SCHEMA = '--output structured requires --schema-file or --schema';
 
-export type CommonCliOptions = {
+type CommonCliOptions = {
   includeDomains?: string[];
   excludeDomains?: string[];
   fromDate?: Date;
   toDate?: Date;
 };
 
-export type PaginationSortCliOptions<
+type PaginationSortCliOptions<
   TSortBy extends string = string,
   TSortDirection extends string = string,
 > = {
@@ -22,12 +22,12 @@ export type PaginationSortCliOptions<
   sortDirection?: TSortDirection;
 };
 
-export type SchemaOutputCliOptions<TOutputType extends string> = SchemaInput & {
+type SchemaOutputCliOptions<TOutputType extends string> = SchemaInput & {
   outputType: TOutputType;
   outputTypeExplicit?: boolean;
 };
 
-export function assertDateRange(fromDate?: Date, toDate?: Date): void {
+function assertDateRange(fromDate?: Date, toDate?: Date): void {
   if (fromDate && toDate && fromDate > toDate) {
     throw new Error('--from-date must be before or equal to --to-date');
   }

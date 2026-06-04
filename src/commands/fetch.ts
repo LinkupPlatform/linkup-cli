@@ -6,7 +6,7 @@ import { formatFetch } from '../output/fetch';
 import { formatTaskErrorLine } from '../output/task-errors';
 import { createPollIntervalOption, createTimeoutOption, runAsyncTaskFlow } from './async-task';
 
-export type FetchCommandOptions = {
+type FetchCommandOptions = {
   renderJs?: boolean;
   includeRawHtml?: boolean;
   extractImages?: boolean;

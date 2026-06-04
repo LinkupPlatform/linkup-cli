@@ -7,7 +7,7 @@ import { formatTask, formatTasksSubmitted } from '../output/tasks';
 import { parsePositiveInt } from './option-parsers';
 
 export const DEFAULT_POLL_INTERVAL_SECONDS = 5;
-export const DEFAULT_TIMEOUT_SECONDS = 20 * 60;
+const DEFAULT_TIMEOUT_SECONDS = 20 * 60;
 
 export type PollTaskStatus = 'completed' | 'failed' | 'timeout';
 
@@ -16,7 +16,7 @@ export type PollableTask = {
   status: TaskStatus;
 };
 
-export type PollTaskOptions<TTask extends PollableTask> = {
+type PollTaskOptions<TTask extends PollableTask> = {
   getTask: (id: string) => Promise<TTask>;
   id: string;
   intervalMs: number;
@@ -30,7 +30,7 @@ export type PollTaskResult<TTask extends PollableTask> = {
   task: TTask;
 };
 
-export type WaitForTaskOptions<TTask extends PollableTask> = {
+type WaitForTaskOptions<TTask extends PollableTask> = {
   getTask: (id: string) => Promise<TTask>;
   id: string;
   json: boolean;
@@ -44,7 +44,7 @@ type GenericTaskClient = {
   getTask: (id: string) => Promise<Task>;
 };
 
-export type AsyncTaskFlowOptions<TParams, TResponse> = {
+type AsyncTaskFlowOptions<TParams, TResponse> = {
   async?: boolean;
   buildRequest: (params: TParams) => TaskRequest;
   client: GenericTaskClient;

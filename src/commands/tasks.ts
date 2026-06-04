@@ -31,8 +31,8 @@ import { parsePositiveInt } from './option-parsers';
 import { SORT_BY_CHOICES, SORT_DIRECTION_CHOICES } from './research';
 import { buildPaginationSortParams } from './shared-params';
 
-export const TASK_STATUS_CHOICES: TaskStatus[] = ['pending', 'processing', 'completed', 'failed'];
-export const TASK_TYPE_CHOICES: TaskType[] = ['search', 'fetch', 'research'];
+const TASK_STATUS_CHOICES: TaskStatus[] = ['pending', 'processing', 'completed', 'failed'];
+const TASK_TYPE_CHOICES: TaskType[] = ['search', 'fetch', 'research'];
 
 type TaskCreateCommandOptions = {
   file?: string;
@@ -47,7 +47,7 @@ type TaskGetCommandOptions = {
   timeout: number;
 };
 
-export type TaskListCliOptions = {
+type TaskListCliOptions = {
   page?: number;
   pageSize?: number;
   sortBy?: TaskSortBy;

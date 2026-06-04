@@ -3,11 +3,11 @@ import { LinkupClient } from 'linkup-sdk';
 import { resolveConfig } from './config';
 import { exitWithError } from './output/errors';
 
-export type GlobalOptions = {
+type GlobalOptions = {
   json?: boolean;
 };
 
-export type ResolvedGlobals = {
+type ResolvedGlobals = {
   client: LinkupClient;
   json: boolean;
 };

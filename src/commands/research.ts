@@ -36,12 +36,12 @@ import {
   STRUCTURED_REQUIRES_SCHEMA,
 } from './shared-params';
 
-export type ResearchOutputType = 'sourcedAnswer' | 'structured';
-export type ResearchCliOutputType = 'sourced-answer' | 'structured';
+type ResearchOutputType = 'sourcedAnswer' | 'structured';
+type ResearchCliOutputType = 'sourced-answer' | 'structured';
 
-export const RESEARCH_OUTPUT_CHOICES: ResearchCliOutputType[] = ['sourced-answer', 'structured'];
-export const RESEARCH_MODE_CHOICES: ResearchMode[] = ['answer', 'auto', 'investigate', 'research'];
-export const REASONING_DEPTH_CHOICES: ResearchReasoningDepth[] = ['S', 'M', 'L', 'XL'];
+const RESEARCH_OUTPUT_CHOICES: ResearchCliOutputType[] = ['sourced-answer', 'structured'];
+const RESEARCH_MODE_CHOICES: ResearchMode[] = ['answer', 'auto', 'investigate', 'research'];
+const REASONING_DEPTH_CHOICES: ResearchReasoningDepth[] = ['S', 'M', 'L', 'XL'];
 export const SORT_BY_CHOICES: TaskSortBy[] = ['createdAt', 'updatedAt'];
 export const SORT_DIRECTION_CHOICES: SortDirection[] = ['asc', 'desc'];
 
@@ -52,7 +52,7 @@ const OUTPUT_TYPE_MAP: Record<ResearchCliOutputType, ResearchOutputType> = {
 
 const DEFAULT_REASONING_DEPTH: ResearchReasoningDepth = 'L';
 
-export type ResearchCliOptions = {
+type ResearchCliOptions = {
   outputType: ResearchOutputType;
   outputTypeExplicit?: boolean;
   schemaFile?: string;
@@ -65,12 +65,12 @@ export type ResearchCliOptions = {
   toDate?: Date;
 };
 
-export type BuildResearchParamsResult = {
+type BuildResearchParamsResult = {
   params: ResearchParams;
   warnings: string[];
 };
 
-export type ListResearchCliOptions = {
+type ListResearchCliOptions = {
   page?: number;
   pageSize?: number;
   sortBy?: TaskSortBy;

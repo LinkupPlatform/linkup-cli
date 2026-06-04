@@ -18,9 +18,9 @@ import {
 } from './shared-params';
 
 export type SearchOutputType = 'sourcedAnswer' | 'searchResults' | 'structured';
-export type SearchCliOutputType = 'sourced-answer' | 'search-results' | 'structured';
+type SearchCliOutputType = 'sourced-answer' | 'search-results' | 'structured';
 
-export type SearchCliOptions = {
+type SearchCliOptions = {
   depth: SearchDepth;
   outputType: SearchOutputType;
   outputTypeExplicit?: boolean;
@@ -34,17 +34,13 @@ export type SearchCliOptions = {
   maxResults?: number;
 };
 
-export type BuildSearchParamsResult = {
+type BuildSearchParamsResult = {
   params: SearchParams;
   warnings: string[];
 };
 
-export const DEPTH_CHOICES: SearchDepth[] = ['fast', 'standard', 'deep'];
-export const OUTPUT_CHOICES: SearchCliOutputType[] = [
-  'sourced-answer',
-  'search-results',
-  'structured',
-];
+const DEPTH_CHOICES: SearchDepth[] = ['fast', 'standard', 'deep'];
+const OUTPUT_CHOICES: SearchCliOutputType[] = ['sourced-answer', 'search-results', 'structured'];
 
 const OUTPUT_TYPE_MAP: Record<SearchCliOutputType, SearchOutputType> = {
   'search-results': 'searchResults',
