@@ -32,6 +32,14 @@ describe('parseTaskRequests', () => {
     expect(() => parseTaskRequests('{nope')).toThrow('Could not parse tasks JSON');
   });
 
+  it('rejects an empty task request array', () => {
+    expect(() => parseTaskRequests('[]')).toThrow('at least one task request');
+  });
+
+  it('rejects top-level primitive JSON', () => {
+    expect(() => parseTaskRequests('42')).toThrow('Each task request must be an object');
+  });
+
   it('rejects invalid task types', () => {
     expect(() => parseTaskRequests(JSON.stringify({ input: {}, type: 'crawl' }))).toThrow(
       'type "search", "fetch", or "research"',
@@ -54,6 +62,10 @@ describe('task list parsers', () => {
 
   it('rejects invalid statuses', () => {
     expect(() => parseTaskStatusList('queued')).toThrow('invalid status');
+  });
+
+  it('rejects status lists that are empty after trimming', () => {
+    expect(() => parseTaskStatusList(',, ')).toThrow('at least one status');
   });
 
   it('rejects invalid types', () => {

@@ -75,6 +75,40 @@ describe('buildResearchParams', () => {
     });
   });
 
+  it('infers structured output when schema is provided without explicit output', () => {
+    const { params, warnings } = buildResearchParams('q', {
+      outputType: 'sourcedAnswer',
+      reasoningDepth: 'L',
+      schema: '{"type":"object"}',
+    });
+
+    expect(params).toEqual({
+      outputType: 'structured',
+      query: 'q',
+      reasoningDepth: 'L',
+      structuredOutputSchema: { type: 'object' },
+    });
+    expect(warnings).toEqual([]);
+  });
+
+  it('warns when schema is provided with explicit sourced-answer output', () => {
+    const { params, warnings } = buildResearchParams('q', {
+      outputType: 'sourcedAnswer',
+      outputTypeExplicit: true,
+      reasoningDepth: 'L',
+      schema: '{"type":"object"}',
+    });
+
+    expect(params).toEqual({
+      outputType: 'sourcedAnswer',
+      query: 'q',
+      reasoningDepth: 'L',
+    });
+    expect(warnings).toEqual([
+      'Warning: --schema/--schema-file ignored (only used with --output structured)',
+    ]);
+  });
+
   it('reads structuredOutputSchema from --schema-file', () => {
     const dir = mkdtempSync(join(tmpdir(), 'linkup-research-schema-'));
     const schemaPath = join(dir, 'schema.json');
@@ -96,6 +130,17 @@ describe('buildResearchParams', () => {
     expect(() => buildResearchParams('q', { outputType: 'structured' })).toThrow(
       '--output structured requires --schema-file or --schema',
     );
+  });
+
+  it('rejects from-date values after to-date values', () => {
+    expect(() =>
+      buildResearchParams('q', {
+        fromDate: new Date('2025-02-01'),
+        outputType: 'sourcedAnswer',
+        reasoningDepth: 'L',
+        toDate: new Date('2025-01-01'),
+      }),
+    ).toThrow('--from-date must be before or equal to --to-date');
   });
 });
 
