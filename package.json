@@ -6,7 +6,7 @@
   "author": "Linkup",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LinkupPlatform/linkup-cli-v2"
+    "url": "git+https://github.com/LinkupPlatform/linkup-cli"
   },
   "keywords": [
     "linkup",

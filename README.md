@@ -98,8 +98,8 @@ For single `search`/`fetch` calls, add `--async` to enqueue them as tasks.
 ## Development
 
 ```bash
-git clone https://github.com/LinkupPlatform/linkup-cli-v2
-cd linkup-cli-v2
+git clone https://github.com/LinkupPlatform/linkup-cli
+cd linkup-cli
 npm install
 npm run build
 npm link          # makes 'linkup' available from this local build
