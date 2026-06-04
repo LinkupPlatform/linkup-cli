@@ -23,11 +23,9 @@ export function queryUsageLines(
   ];
 }
 
-/**
- * Resolve a query from any supported source and exit with usage/errors when it
- * cannot be resolved. Shared by the search and research commands so the
- * resolve/cancel/empty/notice contract stays in one place.
- */
+// Resolve a query from any supported source and exit with usage/errors when it
+// cannot be resolved. Shared by the search and research commands so the
+// resolve/cancel/empty/notice contract stays in one place.
 export async function resolveQueryOrExit(
   input: QueryInput,
   usageLines: string[],

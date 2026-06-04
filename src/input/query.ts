@@ -16,7 +16,7 @@ export type ResolvedQuery = {
 
 export type InteractiveResult = { cancelled: boolean; text: string };
 
-/** Injectable readers so the resolver stays unit-testable without real I/O. */
+// Injectable readers so the resolver stays unit-testable without real I/O.
 export type QueryReaders = {
   clipboard: () => ClipboardResult;
   stdin: () => Promise<string>;
@@ -54,14 +54,12 @@ function assertSingleQuerySource(input: QueryInput): void {
   }
 }
 
-/**
- * Resolve the search query from one source:
- * clipboard, file, positional args, piped stdin, or interactive prompt.
- *
- * Throws on hard failures (clipboard tool missing/empty, unreadable file).
- * Returns an empty `query` when nothing resolved (caller prints usage), or
- * `cancelled: true` when the interactive prompt was aborted with Ctrl+C.
- */
+// Resolve the search query from one source:
+// clipboard, file, positional args, piped stdin, or interactive prompt.
+//
+// Throws on hard failures (clipboard tool missing/empty, unreadable file).
+// Returns an empty `query` when nothing resolved (caller prints usage), or
+// `cancelled: true` when the interactive prompt was aborted with Ctrl+C.
 export async function resolveQuery(
   input: QueryInput,
   readers: QueryReaders = defaultReaders,

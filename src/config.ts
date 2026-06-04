@@ -53,10 +53,8 @@ export function readKeyFromFile(configPath: string = getConfigPath()): string | 
   return null;
 }
 
-/**
- * Resolve API key configuration. `LINKUP_API_KEY` takes precedence over `~/.linkup/config`.
- * Prefer the env var for CI, scripts, and other automations; the config file is for local interactive use.
- */
+// Resolve API key configuration. `LINKUP_API_KEY` takes precedence over `~/.linkup/config`.
+// Prefer the env var for CI, scripts, and other automations; the config file is for local interactive use.
 export function resolveConfig(configPath: string = getConfigPath()): ResolvedConfig {
   const envKey = process.env.LINKUP_API_KEY?.trim();
   if (envKey) {

@@ -82,10 +82,8 @@ export function printTimeoutHint(kind: 'task' | 'research', id: string): void {
   console.error(`  linkup tasks get ${id} --wait`);
 }
 
-/**
- * Poll a task until it reaches a terminal state or the timeout elapses.
- * Timers and clock are injectable so the loop can be unit-tested without real delays.
- */
+// Poll a task until it reaches a terminal state or the timeout elapses.
+// Timers and clock are injectable so the loop can be unit-tested without real delays.
 export async function pollTask<TTask extends PollableTask>(
   options: PollTaskOptions<TTask>,
 ): Promise<PollTaskResult<TTask>> {

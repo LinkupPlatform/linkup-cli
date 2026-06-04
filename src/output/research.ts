@@ -4,7 +4,7 @@ import { formatSourcedAnswer, formatStructured } from './search';
 
 const MAX_QUERY_LENGTH = 60;
 
-/** Render the confirmation printed after submitting a research task (async default). */
+// Render the confirmation printed after submitting a research task (async default).
 export function formatResearchSubmitted(task: ResearchTask): string[] {
   return [
     '',
@@ -18,7 +18,7 @@ export function formatResearchSubmitted(task: ResearchTask): string[] {
   ];
 }
 
-/** Render a single research task, including its output when completed. */
+// Render a single research task, including its output when completed.
 export function formatResearchTask(task: ResearchTask): string[] {
   const lines = ['', `Research ${task.id}`, `Status: ${task.status}`];
 
@@ -45,7 +45,7 @@ export function formatResearchTask(task: ResearchTask): string[] {
   return lines;
 }
 
-/** Render a paginated list of research tasks as a compact summary. */
+// Render a paginated list of research tasks as a compact summary.
 export function formatResearchList(paginated: PaginatedResearchTasks): string[] {
   const { data, metadata } = paginated;
 

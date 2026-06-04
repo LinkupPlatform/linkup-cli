@@ -5,9 +5,7 @@ type FetchOutputResponse = LinkupFetchResponse & {
   images?: FetchImage[];
 };
 
-/**
- * Render a fetch response as printable lines.
- */
+// Render a fetch response as printable lines.
 export function formatFetch(response: FetchOutputResponse): string[] {
   const lines = ['', response.markdown.trim(), ''];
 

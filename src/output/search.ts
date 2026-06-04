@@ -39,7 +39,7 @@ function assertSearchResults(response: unknown): asserts response is SearchResul
   }
 }
 
-/** Render a `sourcedAnswer` response: the markdown answer, then up to 5 sources. */
+// Render a `sourcedAnswer` response: the markdown answer, then up to 5 sources.
 export function formatSourcedAnswer(response: SourcedAnswer): string[] {
   const lines: string[] = ['', response.answer.trim(), ''];
 
@@ -55,7 +55,7 @@ export function formatSourcedAnswer(response: SourcedAnswer): string[] {
   return lines;
 }
 
-/** Render a `searchResults` response as a numbered list (name, url, content). */
+// Render a `searchResults` response as a numbered list (name, url, content).
 export function formatSearchResults(response: SearchResults): string[] {
   const lines: string[] = [];
 
@@ -70,12 +70,12 @@ export function formatSearchResults(response: SearchResults): string[] {
   return lines;
 }
 
-/** Render a `structured` response as pretty-printed JSON. */
+// Render a `structured` response as pretty-printed JSON.
 export function formatStructured(response: unknown): string[] {
   return ['', JSON.stringify(response, null, 2), ''];
 }
 
-/** Dispatch to the renderer matching the requested output type. */
+// Dispatch to the renderer matching the requested output type.
 export function formatSearch(outputType: SearchOutputType, response: unknown): string[] {
   if (outputType === 'searchResults') {
     assertSearchResults(response);

@@ -77,7 +77,7 @@ export type ListResearchCliOptions = {
   sortDirection?: SortDirection;
 };
 
-/** Commander-parsed options for the submit action (`--output` maps to outputType). */
+// Commander-parsed options for the submit action (`--output` maps to outputType).
 type ResearchCommandOptions = {
   output: ResearchCliOutputType;
   schemaFile?: string;

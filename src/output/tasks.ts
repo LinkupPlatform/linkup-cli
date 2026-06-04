@@ -30,7 +30,7 @@ function formatIncompleteTask(task: Task): string[] {
   return lines;
 }
 
-/** Render a single generic task, including its output when completed. */
+// Render a single generic task, including its output when completed.
 export function formatTask(task: Task): string[] {
   if (task.status !== 'completed' || !task.output) {
     return formatIncompleteTask(task);
@@ -48,7 +48,7 @@ export function formatTask(task: Task): string[] {
   return [...header, ...formatSearch(task.input.outputType, task.output)];
 }
 
-/** Render the confirmation printed after submitting one or more generic tasks. */
+// Render the confirmation printed after submitting one or more generic tasks.
 export function formatTasksSubmitted(tasks: Task[]): string[] {
   const lines = [''];
 
@@ -78,7 +78,7 @@ export function formatTasksSubmitted(tasks: Task[]): string[] {
   return lines;
 }
 
-/** Render a paginated list of generic tasks as a compact summary. */
+// Render a paginated list of generic tasks as a compact summary.
 export function formatTaskList(paginated: PaginatedTasks): string[] {
   const { data, metadata } = paginated;
 

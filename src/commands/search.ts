@@ -52,7 +52,7 @@ const OUTPUT_TYPE_MAP: Record<SearchCliOutputType, SearchOutputType> = {
   structured: 'structured',
 };
 
-/** Commander-parsed options (--output maps to SDK outputType in toSearchCliOptions). */
+// Commander-parsed options (--output maps to SDK outputType in toSearchCliOptions).
 type SearchCommandOptions = {
   depth: SearchDepth;
   output: SearchCliOutputType;

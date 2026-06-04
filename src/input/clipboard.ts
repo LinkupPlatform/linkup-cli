@@ -4,7 +4,7 @@ export type ClipboardResult = { text: string } | { error: string };
 
 type ClipboardCommand = { command: string; args: string[] };
 
-/** Run a clipboard command. Returns its stdout, or null when the binary is missing. */
+// Run a clipboard command. Returns its stdout, or null when the binary is missing.
 function run({ command, args }: ClipboardCommand): string | null {
   try {
     return execFileSync(command, args, { encoding: 'utf8' });
@@ -18,7 +18,7 @@ function run({ command, args }: ClipboardCommand): string | null {
   }
 }
 
-/** Read text from the system clipboard, with a per-OS strategy. */
+// Read text from the system clipboard, with a per-OS strategy.
 export function readClipboard(): ClipboardResult {
   switch (process.platform) {
     case 'darwin': {
