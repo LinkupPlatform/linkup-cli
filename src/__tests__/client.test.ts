@@ -35,6 +35,7 @@ describe('getClient', () => {
   it('exits with code 1 when no API key is configured', () => {
     const configPath = tempConfigPath();
     delete process.env[ENV_VAR_NAME];
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const exitMock = jest.fn() as never;
     process.exit = exitMock;
@@ -49,5 +50,6 @@ describe('getClient', () => {
     getClient();
 
     expect(exitMock).toHaveBeenCalledWith(1);
+    expect(errorSpy).toHaveBeenCalled();
   });
 });

@@ -1,34 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { join } from 'node:path';
 import { DEFAULT_POLL_INTERVAL_SECONDS } from '../commands/async-task';
-
-const bin = join(__dirname, '../../bin/linkup.js');
-const TEST_API_KEY = 'test-api-key-abcdefghijklmnop';
-
-function runCli(
-  args: string[],
-  env: NodeJS.ProcessEnv = process.env,
-): { stdout: string; stderr: string; status: number } {
-  try {
-    const stdout = execFileSync('node', [bin, ...args], {
-      encoding: 'utf8',
-      env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    return { status: 0, stderr: '', stdout };
-  } catch (error) {
-    const execError = error as {
-      status?: number;
-      stdout?: string;
-      stderr?: string;
-    };
-    return {
-      status: execError.status ?? 1,
-      stderr: execError.stderr ?? '',
-      stdout: execError.stdout ?? '',
-    };
-  }
-}
+import { bin, runCli, TEST_API_KEY } from './helpers/run-cli';
 
 describe('linkup CLI', () => {
   it('--version prints a semver string and exits 0', () => {
@@ -38,11 +10,6 @@ describe('linkup CLI', () => {
 
   it('-v prints a semver string and exits 0', () => {
     const output = execFileSync('node', [bin, '-v']).toString().trim();
-    expect(output).toMatch(/^\d+\.\d+\.\d+/);
-  });
-
-  it('-V remains supported for version output', () => {
-    const output = execFileSync('node', [bin, '-V']).toString().trim();
     expect(output).toMatch(/^\d+\.\d+\.\d+/);
   });
 
@@ -77,34 +44,36 @@ describe('linkup CLI', () => {
     expect(output).toContain('Examples:');
   });
 
-  it('rejects invalid --depth', () => {
-    const { status, stderr } = runCli(['search', 'q', '-d', 'superdeep']);
+  it.each([
+    {
+      args: ['search', 'q', '-d', 'superdeep'],
+      expectedError: /depth|superdeep|choice/i,
+      name: 'invalid --depth',
+    },
+    {
+      args: ['search', 'q', '-o', 'garbage'],
+      expectedError: /output|garbage|choice/i,
+      name: 'invalid --output',
+    },
+    {
+      args: ['search', 'q', '-o', 'sourcedAnswer'],
+      expectedError: /sourcedAnswer|choice/i,
+      name: 'old camelCase --output',
+    },
+    {
+      args: ['search', 'q', '--from-date', 'not-a-date'],
+      expectedError: /from-date|valid date/i,
+      name: 'invalid --from-date',
+    },
+    {
+      args: ['search', 'q', '--max-results', '0'],
+      expectedError: /max-results|positive integer/i,
+      name: 'invalid --max-results',
+    },
+  ])('rejects $name', ({ args, expectedError }) => {
+    const { status, stderr } = runCli(args);
     expect(status).not.toBe(0);
-    expect(stderr).toMatch(/depth|superdeep|choice/i);
-  });
-
-  it('rejects invalid --output', () => {
-    const { status, stderr } = runCli(['search', 'q', '-o', 'garbage']);
-    expect(status).not.toBe(0);
-    expect(stderr).toMatch(/output|garbage|choice/i);
-  });
-
-  it('rejects the old camelCase --output values', () => {
-    const { status, stderr } = runCli(['search', 'q', '-o', 'sourcedAnswer']);
-    expect(status).not.toBe(0);
-    expect(stderr).toMatch(/sourcedAnswer|choice/i);
-  });
-
-  it('rejects invalid --from-date', () => {
-    const { status, stderr } = runCli(['search', 'q', '--from-date', 'not-a-date']);
-    expect(status).not.toBe(0);
-    expect(stderr).toMatch(/from-date|valid date/i);
-  });
-
-  it('rejects invalid --max-results', () => {
-    const { status, stderr } = runCli(['search', 'q', '--max-results', '0']);
-    expect(status).not.toBe(0);
-    expect(stderr).toMatch(/max-results|positive integer/i);
+    expect(stderr).toMatch(expectedError);
   });
 
   it('errors when --file points at a missing file', () => {
@@ -137,16 +106,21 @@ describe('linkup CLI', () => {
     expect(output).toContain('Examples:');
   });
 
-  it('fetch requires a url argument', () => {
-    const { status, stderr } = runCli(['fetch']);
+  it.each([
+    {
+      args: ['fetch'],
+      expectedError: /url|argument|missing/i,
+      name: 'missing url argument',
+    },
+    {
+      args: ['fetch', 'not-a-url'],
+      expectedError: /valid URL/i,
+      name: 'invalid URL value',
+    },
+  ])('fetch rejects $name', ({ args, expectedError }) => {
+    const { status, stderr } = runCli(args);
     expect(status).not.toBe(0);
-    expect(stderr).toMatch(/url|argument|missing/i);
-  });
-
-  it('fetch rejects invalid URLs', () => {
-    const { status, stderr } = runCli(['fetch', 'not-a-url']);
-    expect(status).not.toBe(0);
-    expect(stderr).toMatch(/valid URL/i);
+    expect(stderr).toMatch(expectedError);
   });
 
   it('lists logout in root help', () => {

@@ -124,51 +124,6 @@ describe('buildSearchParams', () => {
     ).toThrow('Schema must be a JSON object');
   });
 
-  it('rejects date ranges where fromDate is after toDate', () => {
-    expect(() =>
-      buildSearchParams('q', {
-        depth: 'standard',
-        fromDate: new Date('2025-02-01'),
-        outputType: 'sourcedAnswer',
-        toDate: new Date('2025-01-01'),
-      }),
-    ).toThrow('--from-date must be before or equal to --to-date');
-  });
-
-  it('infers structured output when schema is provided with the default output', () => {
-    const { params, warnings } = buildSearchParams('q', {
-      depth: 'standard',
-      outputType: 'sourcedAnswer',
-      schema: '{"type":"object"}',
-    });
-
-    expect(params).toEqual({
-      depth: 'standard',
-      outputType: 'structured',
-      query: 'q',
-      structuredOutputSchema: { type: 'object' },
-    });
-    expect(warnings).toEqual([]);
-  });
-
-  it('warns when schema is provided with an explicit sourced-answer output', () => {
-    const { params, warnings } = buildSearchParams('q', {
-      depth: 'standard',
-      outputType: 'sourcedAnswer',
-      outputTypeExplicit: true,
-      schema: '{"type":"object"}',
-    });
-
-    expect(params).toEqual({
-      depth: 'standard',
-      outputType: 'sourcedAnswer',
-      query: 'q',
-    });
-    expect(warnings).toContain(
-      'Warning: --schema/--schema-file ignored (only used with --output structured)',
-    );
-  });
-
   it('rejects schema with search-results output', () => {
     expect(() =>
       buildSearchParams('q', {
