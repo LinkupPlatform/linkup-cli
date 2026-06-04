@@ -97,7 +97,6 @@ describe('buildResearchParams', () => {
       '--output structured requires --schema-file or --schema',
     );
   });
-
 });
 
 describe('buildListResearchParams', () => {
