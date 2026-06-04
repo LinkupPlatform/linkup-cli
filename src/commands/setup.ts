@@ -1,5 +1,4 @@
 import type { Command } from 'commander';
-import { LinkupClient } from 'linkup-sdk';
 import { getConfigPath, saveApiKey, validateApiKey } from '../config';
 import { exitWithCode, exitWithError, formatError } from '../output/errors';
 
@@ -43,9 +42,11 @@ async function runSetup(): Promise<void> {
 
   console.log('\nStep 3: Test connection');
   try {
-    const client = new LinkupClient({ apiKey });
-    await client.search({ depth: 'fast', outputType: 'searchResults', query: 'test' });
-    console.log('Connected to Linkup API');
+    const response = await fetch(SETUP_URL);
+    if (!response.ok) {
+      throw new Error(`Linkup website returned ${response.status} ${response.statusText}`);
+    }
+    console.log('Connected to Linkup website');
   } catch (error) {
     console.error(`Warning: connection test failed: ${formatError(error)}`);
     console.error('Your API key was saved. You can test it with \'linkup search "hello"\'');
