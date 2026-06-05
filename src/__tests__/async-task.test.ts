@@ -1,5 +1,5 @@
 import type { SearchParams, Task, TaskRequest, TaskStatus } from 'linkup-sdk';
-import { pollTask, runAsyncTaskFlow } from '../commands/async-task';
+import { pollTask, runTaskFlow } from '../commands/async-task';
 import { captureConsole } from './helpers/capture';
 import { makeTask } from './helpers/fixtures';
 
@@ -72,7 +72,7 @@ describe('pollTask', () => {
   });
 });
 
-describe('runAsyncTaskFlow', () => {
+describe('runTaskFlow', () => {
   type TestResponse = { answer: string };
 
   beforeEach(() => {
@@ -113,7 +113,7 @@ describe('runAsyncTaskFlow', () => {
     const runSync = jest.fn().mockResolvedValue({ answer: 'done' });
     const { errorSpy, logSpy } = captureConsole();
 
-    await runAsyncTaskFlow({
+    await runTaskFlow({
       buildRequest,
       client,
       formatSync,
@@ -137,7 +137,7 @@ describe('runAsyncTaskFlow', () => {
     const runSync = jest.fn();
     const { logSpy } = captureConsole();
 
-    await runAsyncTaskFlow({
+    await runTaskFlow({
       async: true,
       buildRequest,
       client,
@@ -158,7 +158,7 @@ describe('runAsyncTaskFlow', () => {
     });
     const { logSpy } = captureConsole();
 
-    await runAsyncTaskFlow({
+    await runTaskFlow({
       async: true,
       buildRequest,
       client,
@@ -184,7 +184,7 @@ describe('runAsyncTaskFlow', () => {
     });
     const { logSpy } = captureConsole();
 
-    await runAsyncTaskFlow({
+    await runTaskFlow({
       async: true,
       buildRequest,
       client,
@@ -207,7 +207,7 @@ describe('runAsyncTaskFlow', () => {
     });
     const { errorSpy, logSpy } = captureConsole();
 
-    await runAsyncTaskFlow({
+    await runTaskFlow({
       async: true,
       buildRequest,
       client,
