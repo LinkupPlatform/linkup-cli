@@ -1,8 +1,8 @@
 import type { PaginatedTasks, Task, TasksQuota } from 'linkup-sdk';
-import { truncate } from '../utils';
-import { formatFetch } from './fetch';
-import { formatResearchTask } from './research';
-import { formatSearch } from './search';
+import { truncate } from '../utils.js';
+import { formatFetch } from './fetch.js';
+import { formatResearchTask } from './research.js';
+import { formatSearch } from './search.js';
 
 const MAX_INPUT_LENGTH = 60;
 

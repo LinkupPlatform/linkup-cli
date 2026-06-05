@@ -1,21 +1,22 @@
 import { password } from '@inquirer/prompts';
-import { run } from '../cli';
-import * as configModule from '../config';
-import { captureConsole, mockProcessExit } from './helpers/capture';
+import type { Mock } from 'vitest';
+import { run } from '../cli.js';
+import * as configModule from '../config.js';
+import { captureConsole, mockProcessExit } from './helpers/capture.js';
 
-jest.mock('open', () => ({
+vi.mock('open', () => ({
   __esModule: true,
-  default: jest.fn().mockResolvedValue(undefined),
+  default: vi.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@inquirer/prompts', () => ({
-  password: jest.fn(),
+vi.mock('@inquirer/prompts', () => ({
+  password: vi.fn(),
 }));
 
 function mockCreditsResponse(
   response: Partial<Response> & { json?: () => Promise<unknown> },
 ): void {
-  jest.spyOn(globalThis, 'fetch').mockResolvedValue(response as Response);
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(response as Response);
 }
 
 describe('auth and config integration', () => {
@@ -27,11 +28,11 @@ describe('auth and config integration', () => {
     } else {
       process.env.LINKUP_API_KEY = originalApiKey;
     }
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('prints API key setup guidance when search is invoked without credentials', async () => {
-    jest.spyOn(configModule, 'resolveConfig').mockReturnValue({
+    vi.spyOn(configModule, 'resolveConfig').mockReturnValue({
       apiKey: null,
       configPath: '/tmp/linkup-config',
       source: 'none',
@@ -53,13 +54,13 @@ describe('auth and config integration', () => {
 
   it('prints environment warning after logout when LINKUP_API_KEY is still set', async () => {
     process.env.LINKUP_API_KEY = 'test-api-key-abcdefghijklmnop';
-    jest.spyOn(configModule, 'resolveConfig').mockReturnValue({
+    vi.spyOn(configModule, 'resolveConfig').mockReturnValue({
       apiKey: process.env.LINKUP_API_KEY,
       configPath: '/tmp/linkup-config',
       source: 'env',
       sourceLabel: 'Environment variable',
     });
-    jest.spyOn(configModule, 'clearApiKey').mockReturnValue(true);
+    vi.spyOn(configModule, 'clearApiKey').mockReturnValue(true);
     const { logSpy } = captureConsole();
     await run(['node', 'linkup', 'logout']);
 
@@ -70,7 +71,7 @@ describe('auth and config integration', () => {
   });
 
   it('exits cleanly when setup is cancelled at the API key prompt', async () => {
-    (password as jest.Mock).mockRejectedValueOnce(new Error('cancelled'));
+    (password as Mock).mockRejectedValueOnce(new Error('cancelled'));
     const restoreExit = mockProcessExit();
     const { logSpy } = captureConsole();
 
@@ -84,17 +85,17 @@ describe('auth and config integration', () => {
   });
 
   it('exits with an error when setup cannot save configuration', async () => {
-    (password as jest.Mock).mockResolvedValueOnce('test-api-key-abcdefghijklmnop');
+    (password as Mock).mockResolvedValueOnce('test-api-key-abcdefghijklmnop');
     mockCreditsResponse({
       json: async () => ({ balance: 12.34 }),
       ok: true,
       status: 200,
       statusText: 'OK',
     });
-    jest.spyOn(configModule, 'saveApiKey').mockImplementation(() => {
+    vi.spyOn(configModule, 'saveApiKey').mockImplementation(() => {
       throw new Error('disk full');
     });
-    jest.spyOn(configModule, 'getConfigPath').mockReturnValue('/tmp/linkup-config');
+    vi.spyOn(configModule, 'getConfigPath').mockReturnValue('/tmp/linkup-config');
     const restoreExit = mockProcessExit();
     const { errorSpy } = captureConsole();
 
@@ -108,13 +109,13 @@ describe('auth and config integration', () => {
   });
 
   it('exits with an error when setup verification rejects the API key', async () => {
-    (password as jest.Mock).mockResolvedValueOnce('invalid-api-key');
+    (password as Mock).mockResolvedValueOnce('invalid-api-key');
     mockCreditsResponse({
       ok: false,
       status: 401,
       statusText: 'Unauthorized',
     });
-    const saveSpy = jest.spyOn(configModule, 'saveApiKey');
+    const saveSpy = vi.spyOn(configModule, 'saveApiKey');
     const restoreExit = mockProcessExit();
     const { errorSpy } = captureConsole();
 
@@ -131,10 +132,10 @@ describe('auth and config integration', () => {
   });
 
   it('saves the API key and prints a warning when setup verification has a network error', async () => {
-    (password as jest.Mock).mockResolvedValueOnce('test-api-key-abcdefghijklmnop');
-    jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
-    jest.spyOn(configModule, 'saveApiKey').mockImplementation(() => undefined);
-    jest.spyOn(configModule, 'getConfigPath').mockReturnValue('/tmp/linkup-config');
+    (password as Mock).mockResolvedValueOnce('test-api-key-abcdefghijklmnop');
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
+    vi.spyOn(configModule, 'saveApiKey').mockImplementation(() => undefined);
+    vi.spyOn(configModule, 'getConfigPath').mockReturnValue('/tmp/linkup-config');
     const { errorSpy, logSpy } = captureConsole();
 
     await run(['node', 'linkup', 'setup']);

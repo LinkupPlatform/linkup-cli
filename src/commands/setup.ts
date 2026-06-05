@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
-import { getConfigPath, saveApiKey } from '../config';
-import { verifyApiKey } from '../credits';
-import { exitWithCode, exitWithError, formatError } from '../output/errors';
+import { getConfigPath, saveApiKey } from '../config.js';
+import { verifyApiKey } from '../credits.js';
+import { exitWithCode, exitWithError, formatError } from '../output/errors.js';
 
 const SETUP_URL = 'https://app.linkup.so';
 

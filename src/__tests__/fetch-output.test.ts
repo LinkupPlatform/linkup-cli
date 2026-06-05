@@ -1,4 +1,4 @@
-import { formatFetch } from '../output/fetch';
+import { formatFetch } from '../output/fetch.js';
 
 describe('formatFetch', () => {
   it('wraps the extracted markdown in blank lines', () => {

@@ -1,11 +1,11 @@
 import type { SearchResults, SourcedAnswer } from 'linkup-sdk';
-import { formatJson } from '../output/json';
+import { formatJson } from '../output/json.js';
 import {
   formatSearch,
   formatSearchResults,
   formatSourcedAnswer,
   formatStructured,
-} from '../output/search';
+} from '../output/search.js';
 
 describe('formatSourcedAnswer', () => {
   it('renders the answer and lists sources', () => {

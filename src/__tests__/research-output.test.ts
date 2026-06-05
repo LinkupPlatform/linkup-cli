@@ -3,7 +3,7 @@ import {
   formatResearchList,
   formatResearchSubmitted,
   formatResearchTask,
-} from '../output/research';
+} from '../output/research.js';
 
 function baseTask(overrides: Partial<ResearchTask> = {}): ResearchTask {
   return {

@@ -9,18 +9,18 @@ import type {
   TaskStatus,
   TaskType,
 } from 'linkup-sdk';
-import { resolveGlobals } from '../client';
-import { exitWithError, printLines } from '../output/errors';
-import { formatJson } from '../output/json';
-import { startSpinner } from '../output/spinner';
-import { formatTaskErrorLine } from '../output/task-errors';
+import { resolveGlobals } from '../client.js';
+import { exitWithError, printLines } from '../output/errors.js';
+import { formatJson } from '../output/json.js';
+import { startSpinner } from '../output/spinner.js';
+import { formatTaskErrorLine } from '../output/task-errors.js';
 import {
   formatTask,
   formatTaskList,
   formatTasksQuota,
   formatTasksSubmitted,
-} from '../output/tasks';
-import { isRecord, readStdin } from '../utils';
+} from '../output/tasks.js';
+import { isRecord, readStdin } from '../utils.js';
 import {
   createPollIntervalOption,
   createTimeoutOption,
@@ -28,10 +28,10 @@ import {
   pollTask,
   printTimeoutHint,
   waitForTask,
-} from './async-task';
-import { parsePositiveInt } from './option-parsers';
-import { SORT_BY_CHOICES, SORT_DIRECTION_CHOICES } from './research';
-import { buildPaginationSortParams } from './shared-params';
+} from './async-task.js';
+import { parsePositiveInt } from './option-parsers.js';
+import { SORT_BY_CHOICES, SORT_DIRECTION_CHOICES } from './research.js';
+import { buildPaginationSortParams } from './shared-params.js';
 
 const TASK_STATUS_CHOICES: TaskStatus[] = ['pending', 'processing', 'completed', 'failed'];
 const TASK_TYPE_CHOICES: TaskType[] = ['search', 'fetch', 'research'];

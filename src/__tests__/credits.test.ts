@@ -1,12 +1,12 @@
-import { CREDITS_URL, verifyApiKey } from '../credits';
+import { CREDITS_URL, verifyApiKey } from '../credits.js';
 
 function mockFetchResponse(response: Partial<Response> & { json?: () => Promise<unknown> }): void {
-  jest.spyOn(globalThis, 'fetch').mockResolvedValue(response as Response);
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(response as Response);
 }
 
 describe('verifyApiKey', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('returns the credit balance when verification succeeds', async () => {
@@ -43,7 +43,7 @@ describe('verifyApiKey', () => {
   });
 
   it('returns network when fetch throws', async () => {
-    jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
 
     await expect(verifyApiKey('test-api-key')).resolves.toEqual({
       message: 'network down',

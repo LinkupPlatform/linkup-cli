@@ -1,11 +1,11 @@
-import { run } from '../cli';
-import { captureConsole, mockProcessExit } from './helpers/capture';
-import { createFakeClient, mockGlobals } from './helpers/fake-client';
-import { makeResearchTask } from './helpers/fixtures';
+import { run } from '../cli.js';
+import { captureConsole, mockProcessExit } from './helpers/capture.js';
+import { createFakeClient, mockGlobals } from './helpers/fake-client.js';
+import { makeResearchTask } from './helpers/fixtures.js';
 
 describe('research command integration', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('submits structured research and waits for completion', async () => {

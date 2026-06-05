@@ -1,5 +1,5 @@
 import type { Command } from 'commander';
-import { parseSchemaJson, readSchemaRaw, type SchemaInput } from '../input/schema';
+import { parseSchemaJson, readSchemaRaw, type SchemaInput } from '../input/schema.js';
 
 const SCHEMA_IGNORED_WARNING =
   'Warning: --schema/--schema-file ignored (only used with --output structured)';

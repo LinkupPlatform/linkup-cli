@@ -1,18 +1,20 @@
-export class ExitError extends Error {
+import type { MockInstance } from 'vitest';
+
+class ExitError extends Error {
   constructor(public code: number) {
     super(`exit:${code}`);
   }
 }
 
-export type CapturedConsole = {
-  errorSpy: jest.SpyInstance;
-  logSpy: jest.SpyInstance;
+type CapturedConsole = {
+  errorSpy: MockInstance;
+  logSpy: MockInstance;
   restore: () => void;
 };
 
 export function captureConsole(): CapturedConsole {
-  const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-  const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
   return {
     errorSpy,
     logSpy,

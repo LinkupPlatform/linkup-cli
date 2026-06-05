@@ -1,5 +1,5 @@
 import { LinkupTaskNotFoundError, LinkupTasksQueueLimitExceededError } from 'linkup-sdk';
-import { formatErrorLine } from './errors';
+import { formatErrorLine } from './errors.js';
 
 export function formatTaskErrorLine(error: unknown, id?: string): string {
   if (error instanceof LinkupTaskNotFoundError) {

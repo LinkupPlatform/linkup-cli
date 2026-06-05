@@ -1,6 +1,6 @@
 import type { PaginatedResearchTasks, ResearchTask, SourcedAnswer } from 'linkup-sdk';
-import { truncate } from '../utils';
-import { formatSourcedAnswer, formatStructured } from './search';
+import { truncate } from '../utils.js';
+import { formatSourcedAnswer, formatStructured } from './search.js';
 
 const MAX_QUERY_LENGTH = 60;
 

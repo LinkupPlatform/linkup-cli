@@ -1,6 +1,6 @@
 import type { SearchResults, SourcedAnswer } from 'linkup-sdk';
-import type { SearchOutputType } from '../commands/search';
-import { isRecord } from '../utils';
+import type { SearchOutputType } from '../commands/search.js';
+import { isRecord } from '../utils.js';
 
 const MAX_SOURCES = 5;
 

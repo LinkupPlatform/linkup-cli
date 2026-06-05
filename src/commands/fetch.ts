@@ -1,10 +1,10 @@
 import { type Command, InvalidArgumentError } from 'commander';
 import type { FetchParams, TaskRequest } from 'linkup-sdk';
-import { resolveGlobals } from '../client';
-import { exitWithError, formatErrorLine } from '../output/errors';
-import { formatFetch } from '../output/fetch';
-import { formatTaskErrorLine } from '../output/task-errors';
-import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './async-task';
+import { resolveGlobals } from '../client.js';
+import { exitWithError, formatErrorLine } from '../output/errors.js';
+import { formatFetch } from '../output/fetch.js';
+import { formatTaskErrorLine } from '../output/task-errors.js';
+import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './async-task.js';
 
 type FetchCommandOptions = {
   renderJs?: boolean;

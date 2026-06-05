@@ -1,14 +1,14 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { run } from '../cli';
-import { captureConsole } from './helpers/capture';
-import { createFakeClient, mockGlobals } from './helpers/fake-client';
-import { makeTask } from './helpers/fixtures';
+import { run } from '../cli.js';
+import { captureConsole } from './helpers/capture.js';
+import { createFakeClient, mockGlobals } from './helpers/fake-client.js';
+import { makeTask } from './helpers/fixtures.js';
 
 describe('tasks command integration', () => {
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('parses task JSON from file, creates tasks, and waits for completion', async () => {
