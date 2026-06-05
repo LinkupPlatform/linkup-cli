@@ -4,7 +4,7 @@ import { resolveGlobals } from '../client';
 import { exitWithError, formatErrorLine } from '../output/errors';
 import { formatSearch } from '../output/search';
 import { formatTaskErrorLine } from '../output/task-errors';
-import { createPollIntervalOption, createTimeoutOption, runAsyncTaskFlow } from './async-task';
+import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './async-task';
 import { parseDateOption, parseDomainList, parsePositiveInt } from './option-parsers';
 import { queryUsageLines, resolveQueryOrExit } from './query-input';
 import {
@@ -177,7 +177,7 @@ async function runSearch(
       console.error(warning);
     }
 
-    await runAsyncTaskFlow({
+    await runTaskFlow({
       async: options.async,
       buildRequest: buildSearchTaskRequest,
       client,

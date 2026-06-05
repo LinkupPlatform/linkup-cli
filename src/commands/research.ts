@@ -183,6 +183,23 @@ function printResearchResult(result: PollTaskResult<ResearchTask>, json: boolean
   printLines(lines);
 }
 
+async function waitForResearchAndPrint(
+  client: ReturnType<typeof resolveGlobals>['client'],
+  id: string,
+  options: { pollInterval: number; timeout: number },
+  json: boolean,
+): Promise<void> {
+  const result = await waitForTask({
+    getTask: taskId => client.getResearch(taskId),
+    id,
+    json,
+    label: 'Researching...',
+    pollIntervalSeconds: options.pollInterval,
+    timeoutSeconds: options.timeout,
+  });
+  printResearchResult(result, json);
+}
+
 async function runResearchSubmit(
   queryParts: string[],
   options: ResearchCommandOptions,
@@ -210,15 +227,7 @@ async function runResearchSubmit(
     const task = await client.research(params);
 
     if (options.wait) {
-      const result = await waitForTask({
-        getTask: id => client.getResearch(id),
-        id: task.id,
-        json,
-        label: 'Researching...',
-        pollIntervalSeconds: options.pollInterval,
-        timeoutSeconds: options.timeout,
-      });
-      printResearchResult(result, json);
+      await waitForResearchAndPrint(client, task.id, options, json);
       return;
     }
 
@@ -238,15 +247,7 @@ async function runResearchGet(
 
   try {
     if (options.wait) {
-      const result = await waitForTask({
-        getTask: taskId => client.getResearch(taskId),
-        id,
-        json,
-        label: 'Researching...',
-        pollIntervalSeconds: options.pollInterval,
-        timeoutSeconds: options.timeout,
-      });
-      printResearchResult(result, json);
+      await waitForResearchAndPrint(client, id, options, json);
       return;
     }
 

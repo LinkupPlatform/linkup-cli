@@ -120,7 +120,7 @@ export async function waitForTask<TTask extends PollableTask>(
   }
 }
 
-export async function runAsyncTaskFlow<TParams, TResponse>(
+export async function runTaskFlow<TParams, TResponse>(
   options: AsyncTaskFlowOptions<TParams, TResponse>,
 ): Promise<void> {
   if (options.wait && !options.async) {

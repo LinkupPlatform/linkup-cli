@@ -4,7 +4,7 @@ import { resolveGlobals } from '../client';
 import { exitWithError, formatErrorLine } from '../output/errors';
 import { formatFetch } from '../output/fetch';
 import { formatTaskErrorLine } from '../output/task-errors';
-import { createPollIntervalOption, createTimeoutOption, runAsyncTaskFlow } from './async-task';
+import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './async-task';
 
 type FetchCommandOptions = {
   renderJs?: boolean;
@@ -47,7 +47,7 @@ async function runFetch(
     const { client, json } = resolveGlobals(command);
     const params = buildFetchParams(url, options);
 
-    await runAsyncTaskFlow({
+    await runTaskFlow({
       async: options.async,
       buildRequest: buildFetchTaskRequest,
       client,
