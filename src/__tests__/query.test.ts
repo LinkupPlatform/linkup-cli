@@ -5,8 +5,6 @@ import type { QueryReaders } from '../input/query';
 import { resolveQuery } from '../input/query';
 
 const stubReaders: QueryReaders = {
-  clipboard: () => ({ text: '' }),
-  interactive: async () => ({ cancelled: false, text: '' }),
   stdin: async () => '',
 };
 
@@ -34,34 +32,6 @@ describe('resolveQuery', () => {
     ).rejects.toThrow('Could not read query file');
   });
 
-  it('reads from the clipboard and reports the character count', async () => {
-    const readers: QueryReaders = { ...stubReaders, clipboard: () => ({ text: 'pasted text' }) };
-
-    const result = await resolveQuery({ args: [], clipboard: true }, readers, true);
-
-    expect(result.query).toBe('pasted text');
-    expect(result.notices).toContain('Read 11 characters from clipboard');
-  });
-
-  it('errors when the clipboard is empty', async () => {
-    const readers: QueryReaders = { ...stubReaders, clipboard: () => ({ text: '' }) };
-
-    await expect(resolveQuery({ args: [], clipboard: true }, readers, true)).rejects.toThrow(
-      'Clipboard is empty',
-    );
-  });
-
-  it('surfaces clipboard tool errors', async () => {
-    const readers: QueryReaders = {
-      ...stubReaders,
-      clipboard: () => ({ error: 'pbpaste not found' }),
-    };
-
-    await expect(resolveQuery({ args: [], clipboard: true }, readers, true)).rejects.toThrow(
-      'pbpaste not found',
-    );
-  });
-
   it('reads from stdin when input is piped (not a TTY)', async () => {
     const readers: QueryReaders = { ...stubReaders, stdin: async () => '  piped query\n' };
 
@@ -70,34 +40,9 @@ describe('resolveQuery', () => {
     expect(result.query).toBe('piped query');
   });
 
-  it('falls back to the interactive prompt on a TTY', async () => {
-    const readers: QueryReaders = {
-      ...stubReaders,
-      interactive: async () => ({ cancelled: false, text: 'typed query' }),
-    };
-
-    const result = await resolveQuery({ args: [] }, readers, true);
-
-    expect(result.query).toBe('typed query');
-  });
-
-  it('flags interactive cancellation', async () => {
-    const readers: QueryReaders = {
-      ...stubReaders,
-      interactive: async () => ({ cancelled: true, text: '' }),
-    };
-
-    const result = await resolveQuery({ args: [] }, readers, true);
-
-    expect(result.cancelled).toBe(true);
-    expect(result.query).toBe('');
-  });
-
   it('rejects multiple explicit query sources', async () => {
-    const readers: QueryReaders = { ...stubReaders, clipboard: () => ({ text: 'from clipboard' }) };
-
     await expect(
-      resolveQuery({ args: ['from', 'args'], clipboard: true, file: '/ignored' }, readers, true),
-    ).rejects.toThrow('Multiple query sources provided: --clipboard, --file, positional query');
+      resolveQuery({ args: ['from', 'args'], file: '/ignored' }, stubReaders, true),
+    ).rejects.toThrow('Multiple query sources provided: --file, positional query');
   });
 });

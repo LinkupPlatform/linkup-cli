@@ -166,9 +166,8 @@ describe('linkup CLI', () => {
     expect(output).not.toContain('--reasoning-depth L');
   });
 
-  it('research --help lists clipboard and file query sources', () => {
+  it('research --help lists the file query source', () => {
     const output = execFileSync('node', [bin, 'research', '--help']).toString();
-    expect(output).toContain('--clipboard');
     expect(output).toContain('--file');
   });
 

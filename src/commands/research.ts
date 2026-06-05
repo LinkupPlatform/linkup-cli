@@ -88,7 +88,6 @@ type ResearchCommandOptions = {
   excludeDomains?: string[];
   fromDate?: Date;
   toDate?: Date;
-  clipboard?: boolean;
   file?: string;
   wait?: boolean;
   pollInterval: number;
@@ -194,7 +193,6 @@ async function runResearchSubmit(
   const query = await resolveQueryOrExit(
     {
       args: queryParts,
-      clipboard: options.clipboard,
       file: options.file,
     },
     queryUsageLines('research', 'your research question', [
@@ -323,7 +321,6 @@ export function registerResearchCommand(program: Command): void {
       'Only include results published on or before this date',
       parseDateOption('--to-date'),
     )
-    .option('-c, --clipboard', 'Read query from clipboard')
     .option('-f, --file <path>', 'Read query from a file')
     .option('-w, --wait', 'Wait for the task to complete and print the result')
     .addOption(createPollIntervalOption())

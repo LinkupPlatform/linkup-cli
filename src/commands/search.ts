@@ -60,7 +60,6 @@ type SearchCommandOptions = {
   toDate?: Date;
   includeImages?: boolean;
   maxResults?: number;
-  clipboard?: boolean;
   file?: string;
   async?: boolean;
   wait?: boolean;
@@ -165,7 +164,6 @@ async function runSearch(
   const query = await resolveQueryOrExit(
     {
       args: queryParts,
-      clipboard: options.clipboard,
       file: options.file,
     },
     queryUsageLines('search', 'your query'),
@@ -234,7 +232,6 @@ export function registerSearchCommand(program: Command): void {
     )
     .option('--include-images', 'Request images in search results')
     .option('--max-results <number>', 'Maximum number of search results', parsePositiveInt)
-    .option('-c, --clipboard', 'Read query from clipboard')
     .option('-f, --file <path>', 'Read query from a file')
     .option('--async', 'Run the search as an asynchronous task')
     .option('-w, --wait', 'Wait for the asynchronous task to complete and print the result')
