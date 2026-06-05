@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { resolveQueryOrExit } from '../commands/query-input';
 import type { QueryReaders } from '../input/query';
 
@@ -30,18 +33,15 @@ afterEach(() => {
 });
 
 describe('resolveQueryOrExit', () => {
-  it('returns a query joined from positional args', async () => {
+  it('prints notices and returns the resolved query', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'linkup-query-input-test-'));
+    const filePath = join(dir, 'query.txt');
+    writeFileSync(filePath, '  what is linkup?  \n');
+
     await expect(
-      resolveQueryOrExit({ args: ['hello', 'world'] }, usageLines, stubReaders, true),
-    ).resolves.toBe('hello world');
-  });
-
-  it('reads from stdin when input is piped', async () => {
-    const readers: QueryReaders = { ...stubReaders, stdin: async () => '  piped query\n' };
-
-    await expect(resolveQueryOrExit({ args: [] }, usageLines, readers, false)).resolves.toBe(
-      'piped query',
-    );
+      resolveQueryOrExit({ args: [], file: filePath }, usageLines, stubReaders, true),
+    ).resolves.toBe('what is linkup?');
+    expect(errorSpy).toHaveBeenCalledWith(`Read query from ${filePath}`);
   });
 
   it('exits with usage (code 1) when no query resolves', async () => {
@@ -51,7 +51,7 @@ describe('resolveQueryOrExit', () => {
     expect(errorSpy).toHaveBeenCalledWith('Error: No query provided');
   });
 
-  it('exits with code 1 when multiple query sources are provided', async () => {
+  it('exits with a formatted error when query resolution fails', async () => {
     await expect(
       resolveQueryOrExit({ args: ['typed'], file: '/ignored' }, usageLines, stubReaders, true),
     ).rejects.toMatchObject({ code: 1 });
