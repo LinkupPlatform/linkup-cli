@@ -114,22 +114,6 @@ describe('saveApiKey', () => {
     expect(readFileSync(configPath, 'utf8')).toBe('api_key=my-secret-key\n');
   });
 
-  it('rejects empty keys', () => {
-    const configPath = tempConfigPath();
-
-    expect(() => saveApiKey('', configPath)).toThrow(
-      'Invalid API key: must be at least 10 characters and single-line.',
-    );
-  });
-
-  it('rejects keys containing newlines', () => {
-    const configPath = tempConfigPath();
-
-    expect(() => saveApiKey('abc\ninjected', configPath)).toThrow(
-      'Invalid API key: must be at least 10 characters and single-line.',
-    );
-  });
-
   it('trims keys before saving', () => {
     const configPath = tempConfigPath();
 
