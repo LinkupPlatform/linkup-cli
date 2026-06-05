@@ -12,6 +12,7 @@ import type {
 import { resolveGlobals } from '../client';
 import { exitWithError, printLines } from '../output/errors';
 import { formatJson } from '../output/json';
+import { startSpinner } from '../output/spinner';
 import { formatTaskErrorLine } from '../output/task-errors';
 import {
   formatTask,
@@ -24,6 +25,7 @@ import {
   createPollIntervalOption,
   createTimeoutOption,
   type PollTaskResult,
+  pollTask,
   printTimeoutHint,
   waitForTask,
 } from './async-task';
@@ -183,9 +185,21 @@ async function runTasksCreate(options: TaskCreateCommandOptions, command: Comman
     const tasks = await client.createTasks(requests);
 
     if (options.wait) {
-      const results = [];
-      for (const task of tasks) {
-        results.push(await waitForGenericTask(task.id, options, id => client.getTask(id), json));
+      const stopSpinner = json ? () => {} : startSpinner(`Waiting for ${tasks.length} task(s)...`);
+      let results: PollTaskResult<Task>[];
+      try {
+        results = await Promise.all(
+          tasks.map(task =>
+            pollTask({
+              getTask: id => client.getTask(id),
+              id: task.id,
+              intervalMs: options.pollInterval * 1000,
+              timeoutMs: options.timeout * 1000,
+            }),
+          ),
+        );
+      } finally {
+        stopSpinner();
       }
 
       if (json) {
