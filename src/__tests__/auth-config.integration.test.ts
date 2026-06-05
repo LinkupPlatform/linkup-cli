@@ -12,6 +12,12 @@ jest.mock('@inquirer/prompts', () => ({
   password: jest.fn(),
 }));
 
+function mockCreditsResponse(
+  response: Partial<Response> & { json?: () => Promise<unknown> },
+): void {
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(response as Response);
+}
+
 describe('auth and config integration', () => {
   const originalApiKey = process.env.LINKUP_API_KEY;
 
@@ -79,6 +85,12 @@ describe('auth and config integration', () => {
 
   it('exits with an error when setup cannot save configuration', async () => {
     (password as jest.Mock).mockResolvedValueOnce('test-api-key-abcdefghijklmnop');
+    mockCreditsResponse({
+      json: async () => ({ balance: 12.34 }),
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+    });
     jest.spyOn(configModule, 'saveApiKey').mockImplementation(() => {
       throw new Error('disk full');
     });
@@ -93,5 +105,45 @@ describe('auth and config integration', () => {
     }
 
     expect(errorSpy).toHaveBeenCalledWith('Error: Saving config failed: disk full');
+  });
+
+  it('exits with an error when setup verification rejects the API key', async () => {
+    (password as jest.Mock).mockResolvedValueOnce('invalid-api-key');
+    mockCreditsResponse({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+    });
+    const saveSpy = jest.spyOn(configModule, 'saveApiKey');
+    const restoreExit = mockProcessExit();
+    const { errorSpy } = captureConsole();
+
+    try {
+      await expect(run(['node', 'linkup', 'setup'])).rejects.toMatchObject({ code: 1 });
+    } finally {
+      restoreExit();
+    }
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Error: Invalid API key. Get a valid key at https://app.linkup.so',
+    );
+    expect(saveSpy).not.toHaveBeenCalled();
+  });
+
+  it('saves the API key and prints a warning when setup verification has a network error', async () => {
+    (password as jest.Mock).mockResolvedValueOnce('test-api-key-abcdefghijklmnop');
+    jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
+    jest.spyOn(configModule, 'saveApiKey').mockImplementation(() => undefined);
+    jest.spyOn(configModule, 'getConfigPath').mockReturnValue('/tmp/linkup-config');
+    const { errorSpy, logSpy } = captureConsole();
+
+    await run(['node', 'linkup', 'setup']);
+
+    expect(configModule.saveApiKey).toHaveBeenCalledWith('test-api-key-abcdefghijklmnop');
+    expect(logSpy).toHaveBeenCalledWith('API key saved to /tmp/linkup-config');
+    expect(errorSpy).toHaveBeenCalledWith('Warning: API key verification failed: network down');
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Your API key was saved. You can test it with \'linkup search "hello"\'',
+    );
   });
 });
