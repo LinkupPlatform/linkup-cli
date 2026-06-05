@@ -1,5 +1,6 @@
 import type { Command } from 'commander';
-import { getConfigPath, saveApiKey, validateApiKey } from '../config';
+import { getConfigPath, saveApiKey } from '../config';
+import { verifyApiKey } from '../credits';
 import { exitWithCode, exitWithError, formatError } from '../output/errors';
 
 const SETUP_URL = 'https://app.linkup.so';
@@ -27,12 +28,18 @@ async function runSetup(): Promise<void> {
     exitWithCode(0);
   }
 
-  const validationError = validateApiKey(apiKey);
-  if (validationError) {
-    exitWithError(`Error: ${validationError}`);
+  apiKey = apiKey.trim();
+
+  console.log('\nStep 2: Verify API key');
+  const verification = await verifyApiKey(apiKey);
+  if (!verification.ok && verification.reason === 'invalid') {
+    exitWithError('Error: Invalid API key. Get a valid key at https://app.linkup.so');
+  }
+  if (verification.ok) {
+    console.log(`Verified: ${verification.balance} credits available`);
   }
 
-  console.log('\nStep 2: Save configuration');
+  console.log('\nStep 3: Save configuration');
   try {
     saveApiKey(apiKey);
     console.log(`API key saved to ${getConfigPath()}`);
@@ -40,15 +47,8 @@ async function runSetup(): Promise<void> {
     exitWithError(`Error: Saving config failed: ${formatError(error)}`);
   }
 
-  console.log('\nStep 3: Test connection');
-  try {
-    const response = await fetch(SETUP_URL);
-    if (!response.ok) {
-      throw new Error(`Linkup website returned ${response.status} ${response.statusText}`);
-    }
-    console.log('Connected to Linkup website');
-  } catch (error) {
-    console.error(`Warning: connection test failed: ${formatError(error)}`);
+  if (!verification.ok && verification.reason === 'network') {
+    console.error(`Warning: API key verification failed: ${verification.message}`);
     console.error('Your API key was saved. You can test it with \'linkup search "hello"\'');
   }
 

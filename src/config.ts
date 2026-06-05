@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 
 const CONFIG_DIR_NAME = '.linkup';
 const KEY_PREFIX = 'api_key=';
-const MIN_API_KEY_LENGTH = 10;
+const MASKED_API_KEY_MIN_LENGTH = 10;
 
 export type ConfigSource = 'env' | 'file' | 'none';
 
@@ -23,7 +23,7 @@ export type ResolvedConfig = {
   configPath: string;
 };
 
-export function getConfigDir(): string {
+function getConfigDir(): string {
   return join(homedir(), CONFIG_DIR_NAME);
 }
 
@@ -88,25 +88,7 @@ export function getApiKey(configPath: string = getConfigPath()): string | null {
   return resolveConfig(configPath).apiKey;
 }
 
-export function validateApiKey(apiKey: string): string | null {
-  const normalized = apiKey.trim();
-  if (!normalized || normalized.length < MIN_API_KEY_LENGTH || /[\r\n]/.test(apiKey)) {
-    return `Invalid API key: must be at least ${MIN_API_KEY_LENGTH} characters and single-line.`;
-  }
-  return null;
-}
-
-function normalizeApiKeyForSave(apiKey: string): string {
-  const validationError = validateApiKey(apiKey);
-  if (validationError) {
-    throw new Error(validationError);
-  }
-  return apiKey.trim();
-}
-
 export function saveApiKey(apiKey: string, configPath: string = getConfigPath()): void {
-  const normalizedApiKey = normalizeApiKeyForSave(apiKey);
-
   const dirMode = 0o700;
   const fileMode = 0o600;
   const dir = dirname(configPath);
@@ -115,7 +97,7 @@ export function saveApiKey(apiKey: string, configPath: string = getConfigPath())
 
   const tmpPath = `${configPath}.tmp`;
   try {
-    writeFileSync(tmpPath, `${KEY_PREFIX}${normalizedApiKey}\n`, {
+    writeFileSync(tmpPath, `${KEY_PREFIX}${apiKey.trim()}\n`, {
       encoding: 'utf8',
       mode: fileMode,
     });
@@ -148,5 +130,5 @@ export function maskApiKey(key: string): string {
   if (key.length > minLength) {
     return `${key.slice(0, prefixLength)}...${key.slice(-suffixLength)}`;
   }
-  return '*'.repeat(Math.max(key.length, MIN_API_KEY_LENGTH));
+  return '*'.repeat(Math.max(key.length, MASKED_API_KEY_MIN_LENGTH));
 }
