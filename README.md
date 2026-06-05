@@ -7,7 +7,7 @@ Official command-line interface for [Linkup](https://linkup.so) — AI-powered w
 - **Search the web** with three depth modes: `fast`, `standard`, and `deep`.
 - **Fetch** any URL as clean markdown.
 - **Research** asynchronously, and batch mixed jobs with **tasks**.
-- **Scriptable**: `--json` output for any command, plus stdin, file, and clipboard input.
+- **Scriptable**: `--json` output for any command, plus stdin and file input.
 
 ## Install
 

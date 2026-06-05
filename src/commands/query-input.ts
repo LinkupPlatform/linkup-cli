@@ -17,15 +17,13 @@ export function queryUsageLines(
     'Usage:',
     `  linkup ${commandName} "${queryPlaceholder}"`,
     ...extraExamples.map(example => `  ${example}`),
-    `  linkup ${commandName} --clipboard        # read from clipboard`,
     `  linkup ${commandName} --file query.txt   # read from file`,
-    `  linkup ${commandName}                    # interactive mode`,
   ];
 }
 
 // Resolve a query from any supported source and exit with usage/errors when it
 // cannot be resolved. Shared by the search and research commands so the
-// resolve/cancel/empty/notice contract stays in one place.
+// resolve/empty/notice contract stays in one place.
 export async function resolveQueryOrExit(
   input: QueryInput,
   usageLines: string[],
@@ -39,9 +37,6 @@ export async function resolveQueryOrExit(
     exitWithError(formatErrorLine(error));
   }
 
-  if (resolved.cancelled) {
-    exitWithError('Cancelled', 0);
-  }
   if (!resolved.query) {
     exitWithError(usageLines);
   }
