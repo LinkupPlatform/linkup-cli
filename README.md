@@ -42,15 +42,16 @@ linkup fetch https://example.com
 linkup research "State of the semiconductor market in 2026"
 ```
 
-### Search
+### Synchronous commands
 
-Immediate web search. Pick the effort with `--depth`:
+These commands run immediately and return the result in the same call.
 
-- `fast` — quickest turnaround on lightweight queries.
-- `standard` — fast and straightforward, for everyday questions (default).
-- `deep` — slower agentic search for complex, multi-step questions.
+#### Search
 
-Choose the output with `--output` (`sourced-answer`, `search-results`, `structured`).
+Run an immediate web search.
+
+- Pick the effort with `--depth`: `fast`, `standard` (default), or `deep`.
+- Choose the output with `--output`: `sourced-answer`, `search-results`, or `structured`.
 
 ```bash
 linkup search "query" --depth deep
@@ -58,42 +59,61 @@ linkup search "query" --output structured --schema-file schema.json
 linkup search "query" --include-domains linkup.so --from-date 2025-01-01
 ```
 
-### Fetch
+#### Fetch
 
-Extract the content of a URL as markdown. Use `--render-js` for JS-heavy pages, `--include-raw-html`, or `--extract-images`.
+Extract the content of a URL as markdown.
+
+- Use `--render-js` for JS-heavy pages.
+- Add `--include-raw-html` to include the source HTML.
+- Add `--extract-images` to include image metadata.
 
 ```bash
 linkup fetch https://example.com --render-js
 ```
 
-### Research
+### Asynchronous commands
 
-Asynchronous deep research. By default it submits the task, prints its id, and exits; pass `--wait` to poll until it finishes.
+These commands submit work that runs in the background. By default, they return a task id that you can use to fetch the result later.
+
+#### Research
+
+Run deep research asynchronously.
+
+- Control effort with `--mode`: `answer`, `auto`, `investigate`, or `research`.
+- Set reasoning depth with `--reasoning-depth`: `S`, `M`, `L`, or `XL`.
 
 ```bash
 linkup research "query"              # submit, prints id
 linkup research get <id>             # fetch the result later
-linkup research "query" --wait       # submit and wait for the answer
 linkup research list                 # recent tasks
 ```
 
-Control effort with `--mode` (`answer`, `auto`, `investigate`, `research`) and `--reasoning-depth` (`S`, `M`, `L`, `XL`). Tune polling with `--poll-interval` and `--timeout`.
-
-```bash
-linkup --json research "your question" --wait | jq '.output.answer'
-```
-
-### Tasks
+#### Tasks
 
 Generic async API for batching and managing `search`, `fetch`, and `research` work. Create tasks from a JSON file or stdin (one object or an array, using camelCase fields):
 
 ```bash
-linkup tasks create --file tasks.json --wait
-linkup tasks get <id> --wait
+linkup tasks create --file tasks.json
+linkup tasks get <id>
 linkup tasks list --status pending,processing --type search,research
 ```
 
-For single `search`/`fetch` calls, add `--async` to enqueue them as tasks.
+For single `search` or `fetch` calls, add `--async` to enqueue them as tasks.
+
+#### Waiting automatically
+
+Add `--wait` to any asynchronous command to poll until the task completes and print the result, instead of returning a task id immediately.
+
+- Use `--poll-interval` to set the delay between checks (default: 5 seconds).
+- Use `--timeout` to set the maximum wait time (default: 20 minutes).
+- If the wait times out, the CLI prints a command you can run later to resume waiting.
+
+```bash
+linkup research "query" --wait                          # submit and wait for the answer
+linkup tasks create --file tasks.json --wait            # create tasks and wait
+linkup research get <id> --wait                          # resume waiting on an existing task
+linkup --json research "your question" --wait | jq '.output.answer'
+```
 
 ## Development
 
