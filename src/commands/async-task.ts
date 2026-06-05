@@ -6,7 +6,7 @@ import { startSpinner } from '../output/spinner';
 import { formatTask, formatTasksSubmitted } from '../output/tasks';
 import { parsePositiveInt } from './option-parsers';
 
-export const DEFAULT_POLL_INTERVAL_SECONDS = 5;
+const DEFAULT_POLL_INTERVAL_SECONDS = 5;
 const DEFAULT_TIMEOUT_SECONDS = 20 * 60;
 
 export type PollTaskStatus = 'completed' | 'failed' | 'timeout';
