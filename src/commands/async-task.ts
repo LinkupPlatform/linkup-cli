@@ -1,10 +1,10 @@
 import { Option } from 'commander';
 import type { Task, TaskRequest, TaskStatus } from 'linkup-sdk';
-import { printLines } from '../output/errors';
-import { formatJson } from '../output/json';
-import { startSpinner } from '../output/spinner';
-import { formatTask, formatTasksSubmitted } from '../output/tasks';
-import { parsePositiveInt } from './option-parsers';
+import { printLines } from '../output/errors.js';
+import { formatJson } from '../output/json.js';
+import { startSpinner } from '../output/spinner.js';
+import { formatTask, formatTasksSubmitted } from '../output/tasks.js';
+import { parsePositiveInt } from './option-parsers.js';
 
 const DEFAULT_POLL_INTERVAL_SECONDS = 5;
 const DEFAULT_TIMEOUT_SECONDS = 20 * 60;

@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
 import { LinkupClient } from 'linkup-sdk';
-import { resolveConfig } from './config';
-import { exitWithError } from './output/errors';
+import { resolveConfig } from './config.js';
+import { exitWithError } from './output/errors.js';
 
 type GlobalOptions = {
   json?: boolean;

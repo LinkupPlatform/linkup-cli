@@ -4,8 +4,8 @@ import {
   type QueryReaders,
   type ResolvedQuery,
   resolveQuery,
-} from '../input/query';
-import { exitWithError, formatErrorLine } from '../output/errors';
+} from '../input/query.js';
+import { exitWithError, formatErrorLine } from '../output/errors.js';
 
 export function queryUsageLines(
   commandName: string,

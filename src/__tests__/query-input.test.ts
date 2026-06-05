@@ -1,8 +1,9 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { resolveQueryOrExit } from '../commands/query-input';
-import type { QueryReaders } from '../input/query';
+import type { MockInstance } from 'vitest';
+import { resolveQueryOrExit } from '../commands/query-input.js';
+import type { QueryReaders } from '../input/query.js';
 
 class ExitError extends Error {
   constructor(public code: number) {
@@ -18,18 +19,18 @@ const stubReaders: QueryReaders = {
 
 const usageLines = ['Error: No query provided'];
 
-let errorSpy: jest.SpyInstance;
+let errorSpy: MockInstance;
 
 beforeEach(() => {
   process.exit = ((code?: number) => {
     throw new ExitError(code ?? 0);
   }) as never;
-  errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
 afterEach(() => {
   process.exit = originalExit;
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe('resolveQueryOrExit', () => {

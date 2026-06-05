@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildListResearchParams, buildResearchParams } from '../commands/research';
+import { buildListResearchParams, buildResearchParams } from '../commands/research.js';
 
 describe('buildResearchParams', () => {
   it('maps a sourced-answer query to SDK fields', () => {

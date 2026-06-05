@@ -1,10 +1,10 @@
 import { execFileSync } from 'node:child_process';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-export const bin = join(__dirname, '../../../bin/linkup.js');
+const bin = fileURLToPath(new URL('../../../bin/linkup.js', import.meta.url));
 export const TEST_API_KEY = 'test-api-key-abcdefghijklmnop';
 
-export type CliResult = {
+type CliResult = {
   stdout: string;
   stderr: string;
   status: number;

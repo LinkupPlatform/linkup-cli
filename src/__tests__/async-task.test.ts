@@ -1,7 +1,8 @@
 import type { SearchParams, Task, TaskRequest, TaskStatus } from 'linkup-sdk';
-import { pollTask, runTaskFlow } from '../commands/async-task';
-import { captureConsole } from './helpers/capture';
-import { makeTask } from './helpers/fixtures';
+import type { Mock } from 'vitest';
+import { pollTask, runTaskFlow } from '../commands/async-task.js';
+import { captureConsole } from './helpers/capture.js';
+import { makeTask } from './helpers/fixtures.js';
 
 type TestTask = {
   id: string;
@@ -16,7 +17,7 @@ describe('pollTask', () => {
   const noSleep = (): Promise<void> => Promise.resolve();
 
   it('returns immediately when the task is already completed', async () => {
-    const getTask = jest.fn().mockResolvedValue(makePollTask('completed'));
+    const getTask = vi.fn().mockResolvedValue(makePollTask('completed'));
 
     const result = await pollTask({
       getTask,
@@ -31,7 +32,7 @@ describe('pollTask', () => {
   });
 
   it('polls until the task reaches a terminal state', async () => {
-    const getTask = jest
+    const getTask = vi
       .fn()
       .mockResolvedValueOnce(makePollTask('pending'))
       .mockResolvedValueOnce(makePollTask('processing'))
@@ -50,7 +51,7 @@ describe('pollTask', () => {
   });
 
   it('reports a timeout when the deadline elapses before completion', async () => {
-    const getTask = jest.fn().mockResolvedValue(makePollTask('pending'));
+    const getTask = vi.fn().mockResolvedValue(makePollTask('pending'));
     let clock = 0;
     const now = (): number => {
       const value = clock;
@@ -76,25 +77,25 @@ describe('runTaskFlow', () => {
   type TestResponse = { answer: string };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   function makeClient(
     overrides: {
-      createTasks?: jest.Mock<Promise<Task[]>, [TaskRequest[]]>;
-      getTask?: jest.Mock<Promise<Task>, [string]>;
+      createTasks?: Mock<(requests: TaskRequest[]) => Promise<Task[]>>;
+      getTask?: Mock<(id: string) => Promise<Task>>;
     } = {},
   ): {
-    createTasks: jest.Mock<Promise<Task[]>, [TaskRequest[]]>;
-    getTask: jest.Mock<Promise<Task>, [string]>;
+    createTasks: Mock<(requests: TaskRequest[]) => Promise<Task[]>>;
+    getTask: Mock<(id: string) => Promise<Task>>;
   } {
     return {
-      createTasks: overrides.createTasks ?? jest.fn<Promise<Task[]>, [TaskRequest[]]>(),
-      getTask: overrides.getTask ?? jest.fn<Promise<Task>, [string]>(),
+      createTasks: overrides.createTasks ?? vi.fn<(requests: TaskRequest[]) => Promise<Task[]>>(),
+      getTask: overrides.getTask ?? vi.fn<(id: string) => Promise<Task>>(),
     };
   }
 
@@ -103,14 +104,14 @@ describe('runTaskFlow', () => {
     outputType: 'sourcedAnswer',
     query: 'hello',
   };
-  const buildRequest = jest.fn(
+  const buildRequest = vi.fn(
     (requestParams: SearchParams): TaskRequest => ({ input: requestParams, type: 'search' }),
   );
-  const formatSync = jest.fn((response: TestResponse): string[] => [`Answer: ${response.answer}`]);
+  const formatSync = vi.fn((response: TestResponse): string[] => [`Answer: ${response.answer}`]);
 
   it('warns and runs synchronously when --wait is used without --async', async () => {
     const client = makeClient();
-    const runSync = jest.fn().mockResolvedValue({ answer: 'done' });
+    const runSync = vi.fn().mockResolvedValue({ answer: 'done' });
     const { errorSpy, logSpy } = captureConsole();
 
     await runTaskFlow({
@@ -132,9 +133,9 @@ describe('runTaskFlow', () => {
   it('submits an async task and prints JSON without waiting', async () => {
     const task = makeTask({ id: 'task-json' });
     const client = makeClient({
-      createTasks: jest.fn().mockResolvedValue([task]),
+      createTasks: vi.fn().mockResolvedValue([task]),
     });
-    const runSync = jest.fn();
+    const runSync = vi.fn();
     const { logSpy } = captureConsole();
 
     await runTaskFlow({
@@ -154,7 +155,7 @@ describe('runTaskFlow', () => {
 
   it('submits an async task and prints formatted output without waiting', async () => {
     const client = makeClient({
-      createTasks: jest.fn().mockResolvedValue([makeTask({ id: 'task-formatted' })]),
+      createTasks: vi.fn().mockResolvedValue([makeTask({ id: 'task-formatted' })]),
     });
     const { logSpy } = captureConsole();
 
@@ -165,7 +166,7 @@ describe('runTaskFlow', () => {
       formatSync,
       json: false,
       params,
-      runSync: jest.fn(),
+      runSync: vi.fn(),
     });
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Task submitted: task-formatted'));
@@ -179,8 +180,8 @@ describe('runTaskFlow', () => {
       status: 'completed',
     });
     const client = makeClient({
-      createTasks: jest.fn().mockResolvedValue([submitted]),
-      getTask: jest.fn().mockResolvedValue(completed),
+      createTasks: vi.fn().mockResolvedValue([submitted]),
+      getTask: vi.fn().mockResolvedValue(completed),
     });
     const { logSpy } = captureConsole();
 
@@ -191,7 +192,7 @@ describe('runTaskFlow', () => {
       formatSync,
       json: true,
       params,
-      runSync: jest.fn(),
+      runSync: vi.fn(),
       wait: true,
     });
 
@@ -202,8 +203,8 @@ describe('runTaskFlow', () => {
   it('prints a timeout hint when waiting reaches the timeout', async () => {
     const pending = makeTask({ id: 'task-timeout', status: 'pending' });
     const client = makeClient({
-      createTasks: jest.fn().mockResolvedValue([pending]),
-      getTask: jest.fn().mockResolvedValue(pending),
+      createTasks: vi.fn().mockResolvedValue([pending]),
+      getTask: vi.fn().mockResolvedValue(pending),
     });
     const { errorSpy, logSpy } = captureConsole();
 
@@ -214,7 +215,7 @@ describe('runTaskFlow', () => {
       formatSync,
       json: true,
       params,
-      runSync: jest.fn(),
+      runSync: vi.fn(),
       timeoutSeconds: 0,
       wait: true,
     });

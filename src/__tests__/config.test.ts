@@ -8,7 +8,7 @@ import {
   readKeyFromFile,
   resolveConfig,
   saveApiKey,
-} from '../config';
+} from '../config.js';
 
 const ENV_VAR_NAME = 'LINKUP_API_KEY';
 const originalEnvKey = process.env[ENV_VAR_NAME];

@@ -8,23 +8,23 @@ import type {
   SortDirection,
   TaskSortBy,
 } from 'linkup-sdk';
-import { resolveGlobals } from '../client';
-import { exitWithError, formatErrorLine, printLines } from '../output/errors';
-import { formatJson } from '../output/json';
+import { resolveGlobals } from '../client.js';
+import { exitWithError, formatErrorLine, printLines } from '../output/errors.js';
+import { formatJson } from '../output/json.js';
 import {
   formatResearchList,
   formatResearchSubmitted,
   formatResearchTask,
-} from '../output/research';
+} from '../output/research.js';
 import {
   createPollIntervalOption,
   createTimeoutOption,
   type PollTaskResult,
   printTimeoutHint,
   waitForTask,
-} from './async-task';
-import { parseDateOption, parseDomainList, parsePositiveInt } from './option-parsers';
-import { queryUsageLines, resolveQueryOrExit } from './query-input';
+} from './async-task.js';
+import { parseDateOption, parseDomainList, parsePositiveInt } from './option-parsers.js';
+import { queryUsageLines, resolveQueryOrExit } from './query-input.js';
 import {
   addSchemaIgnoredWarning,
   buildCommonParams,
@@ -34,7 +34,7 @@ import {
   loadStructuredSchema,
   resolveStructuredOutputType,
   STRUCTURED_REQUIRES_SCHEMA,
-} from './shared-params';
+} from './shared-params.js';
 
 type ResearchOutputType = 'sourcedAnswer' | 'structured';
 type ResearchCliOutputType = 'sourced-answer' | 'structured';

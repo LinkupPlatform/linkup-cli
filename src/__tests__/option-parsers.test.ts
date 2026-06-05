@@ -1,5 +1,5 @@
 import { InvalidArgumentError } from 'commander';
-import { parseDateOption, parseDomainList, parsePositiveInt } from '../commands/option-parsers';
+import { parseDateOption, parseDomainList, parsePositiveInt } from '../commands/option-parsers.js';
 
 describe('parsePositiveInt', () => {
   it.each([

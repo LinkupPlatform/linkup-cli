@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { readStdin } from '../utils';
+import { readStdin } from '../utils.js';
 
 export type QueryInput = {
   file?: string;

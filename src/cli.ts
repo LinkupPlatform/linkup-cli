@@ -1,12 +1,12 @@
 import { Command } from 'commander';
-import { version } from '../package.json';
-import { registerConfigCommand } from './commands/config';
-import { registerFetchCommand } from './commands/fetch';
-import { registerLogoutCommand } from './commands/logout';
-import { registerResearchCommand } from './commands/research';
-import { registerSearchCommand } from './commands/search';
-import { registerSetupCommand } from './commands/setup';
-import { registerTasksCommand } from './commands/tasks';
+import pkg from '../package.json' with { type: 'json' };
+import { registerConfigCommand } from './commands/config.js';
+import { registerFetchCommand } from './commands/fetch.js';
+import { registerLogoutCommand } from './commands/logout.js';
+import { registerResearchCommand } from './commands/research.js';
+import { registerSearchCommand } from './commands/search.js';
+import { registerSetupCommand } from './commands/setup.js';
+import { registerTasksCommand } from './commands/tasks.js';
 
 export function createCLI(): Command {
   const program = new Command();
@@ -14,7 +14,7 @@ export function createCLI(): Command {
   program
     .name('linkup')
     .description('Linkup CLI — AI-powered web search from your terminal')
-    .version(version, '-v, --version')
+    .version(pkg.version, '-v, --version')
     .option('-j, --json', 'Print raw JSON responses')
     .addHelpText(
       'after',

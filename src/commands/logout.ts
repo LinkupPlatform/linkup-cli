@@ -1,6 +1,6 @@
 import type { Command } from 'commander';
-import { clearApiKey, resolveConfig } from '../config';
-import { exitWithError, formatErrorLine } from '../output/errors';
+import { clearApiKey, resolveConfig } from '../config.js';
+import { exitWithError, formatErrorLine } from '../output/errors.js';
 
 function runLogout(): void {
   const resolved = resolveConfig();

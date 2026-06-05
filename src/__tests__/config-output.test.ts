@@ -1,5 +1,5 @@
-import type { ResolvedConfig } from '../config';
-import { formatConfig } from '../output/config';
+import type { ResolvedConfig } from '../config.js';
+import { formatConfig } from '../output/config.js';
 
 const CONFIG_PATH = '/home/user/.linkup/config';
 

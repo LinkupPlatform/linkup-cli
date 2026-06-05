@@ -3,7 +3,7 @@ import {
   parseTaskRequests,
   parseTaskStatusList,
   parseTaskTypeList,
-} from '../commands/tasks';
+} from '../commands/tasks.js';
 
 describe('parseTaskRequests', () => {
   it('accepts a single task request object', () => {

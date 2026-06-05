@@ -6,11 +6,12 @@ import type {
   ResearchParams,
   SearchParams,
 } from 'linkup-sdk';
-import * as clientModule from '../../client';
+import type { Mock } from 'vitest';
+import * as clientModule from '../../client.js';
 
-type MockedFn<TArgs extends unknown[], TResult> = jest.Mock<TResult, TArgs>;
+type MockedFn<TArgs extends unknown[], TResult> = Mock<(...args: TArgs) => TResult>;
 
-export type FakeClient = {
+type FakeClient = {
   search: MockedFn<[SearchParams], Promise<unknown>>;
   fetch: MockedFn<[Record<string, unknown>], Promise<unknown>>;
   research: MockedFn<[ResearchParams], Promise<unknown>>;
@@ -23,23 +24,23 @@ export type FakeClient = {
 
 export function createFakeClient(): FakeClient {
   return {
-    createTasks: jest.fn(),
-    fetch: jest.fn(),
-    getResearch: jest.fn(),
-    getTask: jest.fn(),
-    listResearch: jest.fn(),
-    listTasks: jest.fn(),
-    research: jest.fn(),
-    search: jest.fn(),
+    createTasks: vi.fn(),
+    fetch: vi.fn(),
+    getResearch: vi.fn(),
+    getTask: vi.fn(),
+    listResearch: vi.fn(),
+    listTasks: vi.fn(),
+    research: vi.fn(),
+    search: vi.fn(),
   };
 }
 
-export function asLinkupClient(client: FakeClient): LinkupClient {
+function asLinkupClient(client: FakeClient): LinkupClient {
   return client as unknown as LinkupClient;
 }
 
 export function mockGlobals(fakeClient: FakeClient): void {
-  jest.spyOn(clientModule, 'resolveGlobals').mockImplementation((command: Command) => ({
+  vi.spyOn(clientModule, 'resolveGlobals').mockImplementation((command: Command) => ({
     client: asLinkupClient(fakeClient),
     json: Boolean(command.optsWithGlobals<{ json?: boolean }>().json),
   }));

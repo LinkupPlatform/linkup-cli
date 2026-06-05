@@ -1,4 +1,4 @@
-import { runCli, TEST_API_KEY } from './helpers/run-cli';
+import { runCli, TEST_API_KEY } from './helpers/run-cli.js';
 
 describe('linkup CLI', () => {
   it.each(['--version', '-v'])('%s prints a semver string and exits 0', flag => {

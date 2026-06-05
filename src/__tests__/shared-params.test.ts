@@ -2,7 +2,7 @@ import {
   addSchemaIgnoredWarning,
   buildCommonParams,
   resolveStructuredOutputType,
-} from '../commands/shared-params';
+} from '../commands/shared-params.js';
 
 describe('buildCommonParams', () => {
   it('maps shared filters and dates when provided', () => {

@@ -4,7 +4,7 @@ import {
   formatTaskList,
   formatTasksQuota,
   formatTasksSubmitted,
-} from '../output/tasks';
+} from '../output/tasks.js';
 
 function searchTask(overrides: Partial<Task> = {}): Task {
   return {

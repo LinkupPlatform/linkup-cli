@@ -1,4 +1,4 @@
-import { maskApiKey, type ResolvedConfig } from '../config';
+import { maskApiKey, type ResolvedConfig } from '../config.js';
 
 const NOT_SET = '(not set)';
 const SETUP_HINT = "Run 'linkup setup' to configure your API key";

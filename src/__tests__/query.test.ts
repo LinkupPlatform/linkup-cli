@@ -1,8 +1,8 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { QueryReaders } from '../input/query';
-import { resolveQuery } from '../input/query';
+import type { QueryReaders } from '../input/query.js';
+import { resolveQuery } from '../input/query.js';
 
 const stubReaders: QueryReaders = {
   stdin: async () => '',

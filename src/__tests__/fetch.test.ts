@@ -1,4 +1,4 @@
-import { buildFetchParams, buildFetchTaskRequest } from '../commands/fetch';
+import { buildFetchParams, buildFetchTaskRequest } from '../commands/fetch.js';
 
 describe('buildFetchParams', () => {
   it('maps the URL without optional flags by default', () => {

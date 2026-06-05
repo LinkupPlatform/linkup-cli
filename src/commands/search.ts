@@ -1,12 +1,12 @@
 import { Command, Option } from 'commander';
 import type { SearchDepth, SearchParams, TaskRequest } from 'linkup-sdk';
-import { resolveGlobals } from '../client';
-import { exitWithError, formatErrorLine } from '../output/errors';
-import { formatSearch } from '../output/search';
-import { formatTaskErrorLine } from '../output/task-errors';
-import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './async-task';
-import { parseDateOption, parseDomainList, parsePositiveInt } from './option-parsers';
-import { queryUsageLines, resolveQueryOrExit } from './query-input';
+import { resolveGlobals } from '../client.js';
+import { exitWithError, formatErrorLine } from '../output/errors.js';
+import { formatSearch } from '../output/search.js';
+import { formatTaskErrorLine } from '../output/task-errors.js';
+import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './async-task.js';
+import { parseDateOption, parseDomainList, parsePositiveInt } from './option-parsers.js';
+import { queryUsageLines, resolveQueryOrExit } from './query-input.js';
 import {
   addSchemaIgnoredWarning,
   buildCommonParams,
@@ -15,7 +15,7 @@ import {
   loadStructuredSchema,
   resolveStructuredOutputType,
   STRUCTURED_REQUIRES_SCHEMA,
-} from './shared-params';
+} from './shared-params.js';
 
 export type SearchOutputType = 'sourcedAnswer' | 'searchResults' | 'structured';
 type SearchCliOutputType = 'sourced-answer' | 'search-results' | 'structured';

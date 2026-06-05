@@ -2,8 +2,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { LinkupClient } from 'linkup-sdk';
-import { getClient } from '../client';
-import * as config from '../config';
+import { getClient } from '../client.js';
+import * as config from '../config.js';
 
 const ENV_VAR_NAME = 'LINKUP_API_KEY';
 const originalEnvKey = process.env[ENV_VAR_NAME];
@@ -21,7 +21,7 @@ afterEach(() => {
     process.env[ENV_VAR_NAME] = originalEnvKey;
   }
   process.exit = originalExit;
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe('getClient', () => {
@@ -35,12 +35,12 @@ describe('getClient', () => {
   it('exits with code 1 when no API key is configured', () => {
     const configPath = tempConfigPath();
     delete process.env[ENV_VAR_NAME];
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    const exitMock = jest.fn() as never;
+    const exitMock = vi.fn() as never;
     process.exit = exitMock;
 
-    jest.spyOn(config, 'resolveConfig').mockReturnValue({
+    vi.spyOn(config, 'resolveConfig').mockReturnValue({
       apiKey: null,
       configPath,
       source: 'none',
