@@ -12,7 +12,7 @@ Official command-line interface for [Linkup](https://linkup.so) — AI-powered w
 ## Install
 
 ```bash
-npm install -g @linkup/cli
+npm install -g linkup-search-cli
 ```
 
 > Requires Node.js >= 22
