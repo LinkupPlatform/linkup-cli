@@ -1,6 +1,6 @@
 {
   "name": "linkup-search-cli",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Official CLI for Linkup — AI-powered web search from your terminal",
   "type": "module",
   "license": "MIT",
@@ -77,12 +77,7 @@
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
-      [
-        "@semantic-release/npm",
-        {
-          "npmPublish": false
-        }
-      ],
+      "@semantic-release/npm",
       [
         "@semantic-release/github",
         {
