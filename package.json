@@ -1,5 +1,5 @@
 {
-  "name": "@linkup/cli",
+  "name": "linkup-search-cli",
   "version": "0.0.0",
   "description": "Official CLI for Linkup — AI-powered web search from your terminal",
   "type": "module",
