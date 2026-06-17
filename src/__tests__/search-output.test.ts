@@ -8,12 +8,12 @@ import {
 } from '../output/search.js';
 
 describe('formatSourcedAnswer', () => {
-  it('renders the answer and lists sources', () => {
+  it('renders the answer and lists every source with its snippet', () => {
     const response: SourcedAnswer = {
       answer: 'The answer.',
       sources: [
-        { favicon: 'f', name: 'First', snippet: 's', url: 'https://a.example' },
-        { favicon: 'f', name: 'Second', snippet: 's', url: 'https://b.example' },
+        { favicon: 'f', name: 'First', snippet: 'Snippet one', url: 'https://a.example' },
+        { favicon: 'f', name: 'Second', snippet: 'Snippet two', url: 'https://b.example' },
       ],
     };
 
@@ -23,17 +23,19 @@ describe('formatSourcedAnswer', () => {
       '',
       'The answer.',
       '',
-      'Sources:',
-      '  • First',
-      '    https://a.example',
-      '  • Second',
-      '    https://b.example',
+      'Sources (2):',
+      '  1. First',
+      '     https://a.example',
+      '     Snippet one',
+      '  2. Second',
+      '     https://b.example',
+      '     Snippet two',
       '',
     ]);
   });
 
-  it('caps the source list at five entries', () => {
-    const sources = Array.from({ length: 8 }, (_, i) => ({
+  it('lists all sources without capping the count', () => {
+    const sources = Array.from({ length: 21 }, (_, i) => ({
       favicon: 'f',
       name: `Source ${i}`,
       snippet: 's',
@@ -42,7 +44,8 @@ describe('formatSourcedAnswer', () => {
 
     const lines = formatSourcedAnswer({ answer: 'a', sources });
 
-    expect(lines.filter(line => line.startsWith('  • '))).toHaveLength(5);
+    expect(lines).toContain('Sources (21):');
+    expect(lines.filter(line => /^ {2}\d+\. /.test(line))).toHaveLength(21);
   });
 
   it('omits the Sources section when there are none', () => {
