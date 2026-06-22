@@ -2,8 +2,6 @@ import type { SearchResults, SourcedAnswer } from 'linkup-sdk';
 import type { SearchOutputType } from '../commands/search.js';
 import { isRecord } from '../utils.js';
 
-const MAX_SOURCES = 5;
-
 function assertSourcedAnswer(response: unknown): asserts response is SourcedAnswer {
   if (!isRecord(response) || typeof response.answer !== 'string') {
     throw new Error('sourcedAnswer response was not in the expected format');
@@ -39,16 +37,19 @@ function assertSearchResults(response: unknown): asserts response is SearchResul
   }
 }
 
-// Render a `sourcedAnswer` response: the markdown answer, then up to 5 sources.
+// Render a `sourcedAnswer` response: the markdown answer, then every source.
 export function formatSourcedAnswer(response: SourcedAnswer): string[] {
   const lines: string[] = ['', response.answer.trim(), ''];
 
   const sources = response.sources ?? [];
   if (sources.length > 0) {
-    lines.push('Sources:');
-    for (const source of sources.slice(0, MAX_SOURCES)) {
-      lines.push(`  • ${source.name}`, `    ${source.url}`);
-    }
+    lines.push(`Sources (${sources.length}):`);
+    sources.forEach((source, index) => {
+      lines.push(`  ${index + 1}. ${source.name}`, `     ${source.url}`);
+      if (source.snippet) {
+        lines.push(`     ${source.snippet}`);
+      }
+    });
     lines.push('');
   }
 
