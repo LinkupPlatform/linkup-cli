@@ -52,6 +52,7 @@ Run an immediate web search.
 
 - Pick the effort with `--depth`: `fast`, `standard` (default), or `deep`.
 - Choose the output with `--output`: `sourced-answer`, `search-results`, or `structured`.
+- Add `--include-inline-citations` to sourced answers or `--include-sources` to structured output.
 
 ```bash
 linkup search "query" --depth deep
@@ -64,7 +65,8 @@ linkup search "query" --include-domains linkup.so --from-date 2025-01-01
 Extract the content of a URL as markdown.
 
 - Use `--render-js` for JS-heavy pages.
-- Add `--include-raw-html` to include the source HTML.
+- Add `--include-raw-content` to include the source page content.
+- The deprecated `--include-raw-html` flag remains available for compatibility.
 - Add `--extract-images` to include image metadata.
 
 ```bash

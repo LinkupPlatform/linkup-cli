@@ -13,10 +13,20 @@ describe('search command integration', () => {
     fakeClient.search.mockResolvedValue({ answer: 'done', sources: [] });
     mockGlobals(fakeClient);
     const { logSpy } = captureConsole();
-    await run(['node', 'linkup', '--json', 'search', 'hello world', '--depth', 'deep']);
+    await run([
+      'node',
+      'linkup',
+      '--json',
+      'search',
+      'hello world',
+      '--depth',
+      'deep',
+      '--include-inline-citations',
+    ]);
 
     expect(fakeClient.search).toHaveBeenCalledWith({
       depth: 'deep',
+      includeInlineCitations: true,
       outputType: 'sourcedAnswer',
       query: 'hello world',
     });

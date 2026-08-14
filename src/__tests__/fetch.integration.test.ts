@@ -19,13 +19,13 @@ describe('fetch command integration', () => {
       'fetch',
       'https://example.com',
       '--render-js',
-      '--include-raw-html',
+      '--include-raw-content',
       '--extract-images',
     ]);
 
     expect(fakeClient.fetch).toHaveBeenCalledWith({
       extractImages: true,
-      includeRawHtml: true,
+      includeRawContent: true,
       renderJs: true,
       url: 'https://example.com',
     });

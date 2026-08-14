@@ -31,6 +31,8 @@ type SearchCliOptions = {
   fromDate?: Date;
   toDate?: Date;
   includeImages?: boolean;
+  includeInlineCitations?: boolean;
+  includeSources?: boolean;
   maxResults?: number;
 };
 
@@ -59,6 +61,8 @@ type SearchCommandOptions = {
   fromDate?: Date;
   toDate?: Date;
   includeImages?: boolean;
+  includeInlineCitations?: boolean;
+  includeSources?: boolean;
   maxResults?: number;
   file?: string;
   async?: boolean;
@@ -77,6 +81,8 @@ function toSearchCliOptions(
     fromDate: options.fromDate,
     includeDomains: options.includeDomains,
     includeImages: options.includeImages,
+    includeInlineCitations: options.includeInlineCitations,
+    includeSources: options.includeSources,
     maxResults: options.maxResults,
     outputType: OUTPUT_TYPE_MAP[options.output],
     outputTypeExplicit,
@@ -143,6 +149,16 @@ function addIgnoredOptionWarnings(
   if (opts.outputType !== 'searchResults' && opts.maxResults !== undefined) {
     warnings.push('Warning: --max-results ignored (only used with --output search-results)');
   }
+
+  if (opts.outputType !== 'sourcedAnswer' && opts.includeInlineCitations) {
+    warnings.push(
+      'Warning: --include-inline-citations ignored (only used with --output sourced-answer)',
+    );
+  }
+
+  if (opts.outputType !== 'structured' && opts.includeSources) {
+    warnings.push('Warning: --include-sources ignored (only used with --output structured)');
+  }
 }
 
 function buildSearchExtraParams(opts: SearchCliOptions): Partial<SearchParams> {
@@ -151,6 +167,9 @@ function buildSearchExtraParams(opts: SearchCliOptions): Partial<SearchParams> {
     ...(opts.outputType === 'searchResults' && opts.includeImages && { includeImages: true }),
     ...(opts.outputType === 'searchResults' &&
       opts.maxResults !== undefined && { maxResults: opts.maxResults }),
+    ...(opts.outputType === 'sourcedAnswer' &&
+      opts.includeInlineCitations && { includeInlineCitations: true }),
+    ...(opts.outputType === 'structured' && opts.includeSources && { includeSources: true }),
   };
 }
 
@@ -231,6 +250,8 @@ export function registerSearchCommand(program: Command): void {
       parseDateOption('--to-date'),
     )
     .option('--include-images', 'Request images in search results')
+    .option('--include-inline-citations', 'Include inline citations in sourced answers')
+    .option('--include-sources', 'Include source records with structured output')
     .option('--max-results <number>', 'Maximum number of search results', parsePositiveInt)
     .option('-f, --file <path>', 'Read query from a file')
     .option('--async', 'Run the search as an asynchronous task')

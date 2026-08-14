@@ -1,6 +1,7 @@
 import type { FetchImage, LinkupFetchResponse } from 'linkup-sdk';
 
-type FetchOutputResponse = LinkupFetchResponse & {
+type FetchOutputResponse = Pick<LinkupFetchResponse, 'markdown'> & {
+  rawContent?: string;
   rawHtml?: string;
   images?: FetchImage[];
 };
@@ -8,6 +9,10 @@ type FetchOutputResponse = LinkupFetchResponse & {
 // Render a fetch response as printable lines.
 export function formatFetch(response: FetchOutputResponse): string[] {
   const lines = ['', response.markdown.trim(), ''];
+
+  if (response.rawContent) {
+    lines.push('Raw Content:', response.rawContent.trim(), '');
+  }
 
   if (response.rawHtml) {
     lines.push('Raw HTML:', response.rawHtml.trim(), '');

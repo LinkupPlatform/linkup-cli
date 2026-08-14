@@ -1,5 +1,10 @@
 import type { Command } from 'commander';
-import { parseSchemaJson, readSchemaRaw, type SchemaInput } from '../input/schema.js';
+import {
+  type ObjectSchema,
+  parseSchemaJson,
+  readSchemaRaw,
+  type SchemaInput,
+} from '../input/schema.js';
 
 const SCHEMA_IGNORED_WARNING =
   'Warning: --schema/--schema-file ignored (only used with --output structured)';
@@ -95,7 +100,7 @@ export function addSchemaIgnoredWarning(
   }
 }
 
-export function loadStructuredSchema(opts: SchemaInput): Record<string, unknown> {
+export function loadStructuredSchema(opts: SchemaInput): ObjectSchema {
   return parseSchemaJson(readSchemaRaw(opts));
 }
 

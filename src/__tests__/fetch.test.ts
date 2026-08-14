@@ -11,11 +11,13 @@ describe('buildFetchParams', () => {
     expect(
       buildFetchParams('https://example.com', {
         extractImages: true,
+        includeRawContent: true,
         includeRawHtml: true,
         renderJs: true,
       }),
     ).toEqual({
       extractImages: true,
+      includeRawContent: true,
       includeRawHtml: true,
       renderJs: true,
       url: 'https://example.com',
