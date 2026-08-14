@@ -128,6 +128,16 @@ describe('buildSearchParams', () => {
     ).toThrow('Schema must be a JSON object');
   });
 
+  it('requires an object schema root type', () => {
+    expect(() =>
+      buildSearchParams('q', {
+        depth: 'standard',
+        outputType: 'structured',
+        schema: '{"properties":{}}',
+      }),
+    ).toThrow('Schema root must have type "object"');
+  });
+
   it('rejects schema with search-results output', () => {
     expect(() =>
       buildSearchParams('q', {

@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 
+export type ObjectSchema = Record<string, unknown> & { type: 'object' };
+
 export type SchemaInput = {
   schemaFile?: string;
   schema?: string;
@@ -17,7 +19,7 @@ export function readSchemaRaw(opts: SchemaInput): string {
   return opts.schema ?? '';
 }
 
-export function parseSchemaJson(raw: string): Record<string, unknown> {
+export function parseSchemaJson(raw: string): ObjectSchema {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -30,5 +32,9 @@ export function parseSchemaJson(raw: string): Record<string, unknown> {
     throw new Error('Schema must be a JSON object');
   }
 
-  return parsed as Record<string, unknown>;
+  if (!('type' in parsed) || parsed.type !== 'object') {
+    throw new Error('Schema root must have type "object"');
+  }
+
+  return parsed as ObjectSchema;
 }
