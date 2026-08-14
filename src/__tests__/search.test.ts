@@ -7,11 +7,13 @@ describe('buildSearchParams', () => {
   it('maps sourcedAnswer flags to SDK field names', () => {
     const { params, warnings } = buildSearchParams('hello world', {
       depth: 'deep',
+      includeInlineCitations: true,
       outputType: 'sourcedAnswer',
     });
 
     expect(params).toEqual({
       depth: 'deep',
+      includeInlineCitations: true,
       outputType: 'sourcedAnswer',
       query: 'hello world',
     });
@@ -63,12 +65,14 @@ describe('buildSearchParams', () => {
   it('maps structured output with inline schema to structuredOutputSchema', () => {
     const { params } = buildSearchParams('q', {
       depth: 'standard',
+      includeSources: true,
       outputType: 'structured',
       schema: '{"type":"object","properties":{"name":{"type":"string"}}}',
     });
 
     expect(params).toEqual({
       depth: 'standard',
+      includeSources: true,
       outputType: 'structured',
       query: 'q',
       structuredOutputSchema: {
@@ -150,6 +154,29 @@ describe('buildSearchParams', () => {
     expect(warnings).toEqual([
       'Warning: --include-images ignored (only used with --output search-results)',
       'Warning: --max-results ignored (only used with --output search-results)',
+    ]);
+  });
+
+  it('warns and omits output-specific citation and source options', () => {
+    const sourcedAnswer = buildSearchParams('q', {
+      depth: 'standard',
+      includeSources: true,
+      outputType: 'sourcedAnswer',
+    });
+    const structured = buildSearchParams('q', {
+      depth: 'standard',
+      includeInlineCitations: true,
+      outputType: 'structured',
+      schema: '{"type":"object"}',
+    });
+
+    expect(sourcedAnswer.params).not.toHaveProperty('includeSources');
+    expect(sourcedAnswer.warnings).toEqual([
+      'Warning: --include-sources ignored (only used with --output structured)',
+    ]);
+    expect(structured.params).not.toHaveProperty('includeInlineCitations');
+    expect(structured.warnings).toEqual([
+      'Warning: --include-inline-citations ignored (only used with --output sourced-answer)',
     ]);
   });
 });

@@ -8,6 +8,7 @@ import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './as
 
 type FetchCommandOptions = {
   renderJs?: boolean;
+  includeRawContent?: boolean;
   includeRawHtml?: boolean;
   extractImages?: boolean;
   async?: boolean;
@@ -29,6 +30,7 @@ export function buildFetchParams(url: string, options: FetchCommandOptions): Fet
   return {
     url,
     ...(options.renderJs && { renderJs: true }),
+    ...(options.includeRawContent && { includeRawContent: true }),
     ...(options.includeRawHtml && { includeRawHtml: true }),
     ...(options.extractImages && { extractImages: true }),
   };
@@ -71,7 +73,8 @@ export function registerFetchCommand(program: Command): void {
     .description('Fetch and extract content from a URL')
     .argument('<url>', 'URL to fetch', parseFetchUrl)
     .option('--render-js', 'Execute JavaScript before extracting content')
-    .option('--include-raw-html', 'Include the raw HTML in the response output')
+    .option('--include-raw-content', 'Include the raw page content in the response output')
+    .option('--include-raw-html', 'Include legacy raw HTML in the response output')
     .option('--extract-images', 'Extract image metadata from the fetched page')
     .option('--async', 'Run the fetch as an asynchronous task')
     .option('-w, --wait', 'Wait for the asynchronous task to complete and print the result')
@@ -83,7 +86,7 @@ export function registerFetchCommand(program: Command): void {
 Examples:
   linkup fetch https://example.com
   linkup fetch https://example.com --render-js
-  linkup fetch https://example.com --include-raw-html --json
+  linkup fetch https://example.com --include-raw-content --json
   linkup fetch https://example.com --async --wait
 `,
     )

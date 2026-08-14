@@ -22,6 +22,15 @@ describe('formatFetch', () => {
     expect(lines).toEqual(['', 'Hello', '', 'Raw HTML:', '<html><body>Hello</body></html>', '']);
   });
 
+  it('renders raw content when present', () => {
+    const lines = formatFetch({
+      markdown: 'Hello',
+      rawContent: '\nOriginal page content\n',
+    });
+
+    expect(lines).toEqual(['', 'Hello', '', 'Raw Content:', 'Original page content', '']);
+  });
+
   it('renders extracted images when present', () => {
     const lines = formatFetch({
       images: [
