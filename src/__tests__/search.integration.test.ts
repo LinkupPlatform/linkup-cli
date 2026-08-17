@@ -21,12 +21,17 @@ describe('search command integration', () => {
       'hello world',
       '--depth',
       'deep',
+      '--include-images',
       '--include-inline-citations',
+      '--max-results',
+      '8',
     ]);
 
     expect(fakeClient.search).toHaveBeenCalledWith({
       depth: 'deep',
+      includeImages: true,
       includeInlineCitations: true,
+      maxResults: 8,
       outputType: 'sourcedAnswer',
       query: 'hello world',
     });

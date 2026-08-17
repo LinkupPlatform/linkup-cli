@@ -148,7 +148,7 @@ describe('buildSearchParams', () => {
     ).toThrow('--schema/--schema-file cannot be used with --output search-results');
   });
 
-  it('warns and omits search-result-only options for sourced answers', () => {
+  it('maps general image and limit options for sourced answers', () => {
     const { params, warnings } = buildSearchParams('q', {
       depth: 'standard',
       includeImages: true,
@@ -158,13 +158,12 @@ describe('buildSearchParams', () => {
 
     expect(params).toEqual({
       depth: 'standard',
+      includeImages: true,
+      maxResults: 5,
       outputType: 'sourcedAnswer',
       query: 'q',
     });
-    expect(warnings).toEqual([
-      'Warning: --include-images ignored (only used with --output search-results)',
-      'Warning: --max-results ignored (only used with --output search-results)',
-    ]);
+    expect(warnings).toEqual([]);
   });
 
   it('warns and omits output-specific citation and source options', () => {
