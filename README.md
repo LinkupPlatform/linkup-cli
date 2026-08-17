@@ -52,6 +52,7 @@ Run an immediate web search.
 
 - Pick the effort with `--depth`: `fast`, `standard` (default), or `deep`.
 - Choose the output with `--output`: `sourced-answer`, `search-results`, or `structured`.
+- Use `--include-images` and `--max-results` with any output type.
 - Add `--include-inline-citations` to sourced answers or `--include-sources` to structured output.
 
 ```bash

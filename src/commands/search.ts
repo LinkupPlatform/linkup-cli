@@ -142,14 +142,6 @@ function addIgnoredOptionWarnings(
 ): void {
   addSchemaIgnoredWarning(opts.outputType, hasSchemaOption, warnings);
 
-  if (opts.outputType !== 'searchResults' && opts.includeImages) {
-    warnings.push('Warning: --include-images ignored (only used with --output search-results)');
-  }
-
-  if (opts.outputType !== 'searchResults' && opts.maxResults !== undefined) {
-    warnings.push('Warning: --max-results ignored (only used with --output search-results)');
-  }
-
   if (opts.outputType !== 'sourcedAnswer' && opts.includeInlineCitations) {
     warnings.push(
       'Warning: --include-inline-citations ignored (only used with --output sourced-answer)',
@@ -164,9 +156,8 @@ function addIgnoredOptionWarnings(
 function buildSearchExtraParams(opts: SearchCliOptions): Partial<SearchParams> {
   return {
     ...buildCommonParams(opts),
-    ...(opts.outputType === 'searchResults' && opts.includeImages && { includeImages: true }),
-    ...(opts.outputType === 'searchResults' &&
-      opts.maxResults !== undefined && { maxResults: opts.maxResults }),
+    ...(opts.includeImages && { includeImages: true }),
+    ...(opts.maxResults !== undefined && { maxResults: opts.maxResults }),
     ...(opts.outputType === 'sourcedAnswer' &&
       opts.includeInlineCitations && { includeInlineCitations: true }),
     ...(opts.outputType === 'structured' && opts.includeSources && { includeSources: true }),
@@ -249,7 +240,7 @@ export function registerSearchCommand(program: Command): void {
       'Only include results published on or before this date',
       parseDateOption('--to-date'),
     )
-    .option('--include-images', 'Request images in search results')
+    .option('--include-images', 'Include images in search output')
     .option('--include-inline-citations', 'Include inline citations in sourced answers')
     .option('--include-sources', 'Include source records with structured output')
     .option('--max-results <number>', 'Maximum number of search results', parsePositiveInt)
