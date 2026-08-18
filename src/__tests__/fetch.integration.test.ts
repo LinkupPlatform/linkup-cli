@@ -10,7 +10,10 @@ describe('fetch command integration', () => {
 
   it('maps CLI fetch flags to sdk params and prints formatted output', async () => {
     const fakeClient = createFakeClient();
-    fakeClient.fetch.mockResolvedValue({ markdown: '# Title' });
+    fakeClient.fetch.mockResolvedValue({
+      favicon: 'https://example.com/favicon.ico',
+      markdown: '# Title',
+    });
     mockGlobals(fakeClient);
     const { logSpy } = captureConsole();
     await run([
@@ -33,6 +36,7 @@ describe('fetch command integration', () => {
       url: 'https://example.com',
     });
     expect(logSpy).toHaveBeenCalledWith('# Title');
+    expect(logSpy).toHaveBeenCalledWith('Favicon: https://example.com/favicon.ico');
   });
 
   it('runs async fetch via tasks and prints submitted task in JSON mode', async () => {

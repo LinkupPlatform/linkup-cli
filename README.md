@@ -5,7 +5,7 @@ Official command-line interface for [Linkup](https://linkup.so) — AI-powered w
 ## Features
 
 - **Search the web** with three depth modes: `fast`, `standard`, and `deep`.
-- **Fetch** any URL as clean markdown.
+- **Fetch** any URL as clean markdown with its favicon URL.
 - **Research** asynchronously, and batch mixed jobs with **tasks**.
 - **Scriptable**: `--json` output for any command, plus stdin and file input.
 
@@ -63,7 +63,7 @@ linkup search "query" --include-domains linkup.so --from-date 2025-01-01
 
 #### Fetch
 
-Extract the content of a URL as markdown.
+Extract the content of a URL as markdown together with its favicon URL.
 
 - Select `--mode standard` (default) or `--mode pro` for harder-to-retrieve pages.
 - Use `--render-js` for JS-heavy pages.
