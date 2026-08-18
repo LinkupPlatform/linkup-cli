@@ -70,7 +70,7 @@ describe('formatTask', () => {
   it('renders completed fetch output', () => {
     const lines = formatTask(
       fetchTask({
-        output: { markdown: '# Title' },
+        output: { favicon: 'https://example.com/favicon.ico', markdown: '# Title' },
         status: 'completed',
       }),
     );
@@ -78,6 +78,7 @@ describe('formatTask', () => {
     expect(lines).toContain('Task task-fetch');
     expect(lines).toContain('Type: fetch');
     expect(lines).toContain('# Title');
+    expect(lines).toContain('Favicon: https://example.com/favicon.ico');
   });
 
   it('prints the error message when failed', () => {
