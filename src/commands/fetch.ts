@@ -1,5 +1,5 @@
-import { type Command, InvalidArgumentError } from 'commander';
-import type { FetchParams, TaskRequest } from 'linkup-sdk';
+import { type Command, InvalidArgumentError, Option } from 'commander';
+import type { FetchMode, FetchParams, TaskRequest } from 'linkup-sdk';
 import { resolveGlobals } from '../client.js';
 import { exitWithError, formatErrorLine } from '../output/errors.js';
 import { formatFetch } from '../output/fetch.js';
@@ -7,6 +7,7 @@ import { formatTaskErrorLine } from '../output/task-errors.js';
 import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './async-task.js';
 
 type FetchCommandOptions = {
+  mode?: FetchMode;
   renderJs?: boolean;
   includeRawContent?: boolean;
   includeRawHtml?: boolean;
@@ -29,6 +30,7 @@ function parseFetchUrl(value: string): string {
 export function buildFetchParams(url: string, options: FetchCommandOptions): FetchParams {
   return {
     url,
+    ...(options.mode && { mode: options.mode }),
     ...(options.renderJs && { renderJs: true }),
     ...(options.includeRawContent && { includeRawContent: true }),
     ...(options.includeRawHtml && { includeRawHtml: true }),
@@ -67,11 +69,15 @@ async function runFetch(
 }
 
 export function registerFetchCommand(program: Command): void {
+  const modeChoices: FetchMode[] = ['standard', 'pro'];
+  const modeOption = new Option('--mode <mode>', 'Fetch mode').choices(modeChoices);
+
   program
     .command('fetch')
     .alias('f')
     .description('Fetch and extract content from a URL')
     .argument('<url>', 'URL to fetch', parseFetchUrl)
+    .addOption(modeOption)
     .option('--render-js', 'Execute JavaScript before extracting content')
     .option('--include-raw-content', 'Include the raw page content in the response output')
     .option('--include-raw-html', 'Include legacy raw HTML in the response output')
@@ -85,6 +91,7 @@ export function registerFetchCommand(program: Command): void {
       `
 Examples:
   linkup fetch https://example.com
+  linkup fetch https://example.com --mode pro
   linkup fetch https://example.com --render-js
   linkup fetch https://example.com --include-raw-content --json
   linkup fetch https://example.com --async --wait

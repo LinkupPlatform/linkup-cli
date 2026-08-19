@@ -18,6 +18,8 @@ describe('fetch command integration', () => {
       'linkup',
       'fetch',
       'https://example.com',
+      '--mode',
+      'pro',
       '--render-js',
       '--include-raw-content',
       '--extract-images',
@@ -26,6 +28,7 @@ describe('fetch command integration', () => {
     expect(fakeClient.fetch).toHaveBeenCalledWith({
       extractImages: true,
       includeRawContent: true,
+      mode: 'pro',
       renderJs: true,
       url: 'https://example.com',
     });

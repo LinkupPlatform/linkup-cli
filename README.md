@@ -65,13 +65,14 @@ linkup search "query" --include-domains linkup.so --from-date 2025-01-01
 
 Extract the content of a URL as markdown.
 
+- Select `--mode standard` (default) or `--mode pro` for harder-to-retrieve pages.
 - Use `--render-js` for JS-heavy pages.
 - Add `--include-raw-content` to include the source page content.
 - The deprecated `--include-raw-html` flag remains available for compatibility.
 - Add `--extract-images` to include image metadata.
 
 ```bash
-linkup fetch https://example.com --render-js
+linkup fetch https://example.com --mode pro --render-js
 ```
 
 ### Asynchronous commands

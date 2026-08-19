@@ -13,12 +13,14 @@ describe('buildFetchParams', () => {
         extractImages: true,
         includeRawContent: true,
         includeRawHtml: true,
+        mode: 'pro',
         renderJs: true,
       }),
     ).toEqual({
       extractImages: true,
       includeRawContent: true,
       includeRawHtml: true,
+      mode: 'pro',
       renderJs: true,
       url: 'https://example.com',
     });
