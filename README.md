@@ -70,9 +70,11 @@ Extract the content of a URL as markdown.
 - Add `--include-raw-content` to include the source page content.
 - The deprecated `--include-raw-html` flag remains available for compatibility.
 - Add `--extract-images` to include image metadata.
+- Use `--schema` or `--schema-file` to extract structured data, with optional `--instructions`.
 
 ```bash
 linkup fetch https://example.com --mode pro --render-js
+linkup fetch https://example.com --schema-file schema.json --instructions "Extract the title"
 ```
 
 ### Asynchronous commands

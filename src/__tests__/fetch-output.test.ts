@@ -13,6 +13,22 @@ describe('formatFetch', () => {
     expect(lines).toEqual(['', 'Hello', '']);
   });
 
+  it('renders structured data when present', () => {
+    const lines = formatFetch({
+      data: { author: { name: 'Ada' }, title: 'Example' },
+      markdown: 'Hello',
+    });
+
+    expect(lines).toEqual([
+      '',
+      'Hello',
+      '',
+      'Data:',
+      '{\n  "author": {\n    "name": "Ada"\n  },\n  "title": "Example"\n}',
+      '',
+    ]);
+  });
+
   it('renders raw HTML when present', () => {
     const lines = formatFetch({
       markdown: 'Hello',

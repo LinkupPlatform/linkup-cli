@@ -35,6 +35,38 @@ describe('fetch command integration', () => {
     expect(logSpy).toHaveBeenCalledWith('# Title');
   });
 
+  it('maps structured extraction options and prints extracted data', async () => {
+    const fakeClient = createFakeClient();
+    fakeClient.fetch.mockResolvedValue({
+      data: { title: 'Example Domain' },
+      markdown: '# Example Domain',
+    });
+    mockGlobals(fakeClient);
+    const { logSpy } = captureConsole();
+    await run([
+      'node',
+      'linkup',
+      'fetch',
+      'https://example.com',
+      '--schema',
+      '{"type":"object","properties":{"title":{"type":"string"}}}',
+      '--instructions',
+      'Extract the page title',
+    ]);
+
+    expect(fakeClient.fetch).toHaveBeenCalledWith({
+      instructions: 'Extract the page title',
+      schema: {
+        properties: {
+          title: { type: 'string' },
+        },
+        type: 'object',
+      },
+      url: 'https://example.com',
+    });
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('"title": "Example Domain"'));
+  });
+
   it('runs async fetch via tasks and prints submitted task in JSON mode', async () => {
     const fakeClient = createFakeClient();
     fakeClient.createTasks.mockResolvedValue([

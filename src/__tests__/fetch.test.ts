@@ -25,6 +25,32 @@ describe('buildFetchParams', () => {
       url: 'https://example.com',
     });
   });
+
+  it('maps a schema and instructions for structured extraction', () => {
+    expect(
+      buildFetchParams('https://example.com', {
+        instructions: 'Extract the page title',
+        schema: '{"type":"object","properties":{"title":{"type":"string"}}}',
+      }),
+    ).toEqual({
+      instructions: 'Extract the page title',
+      schema: {
+        properties: {
+          title: { type: 'string' },
+        },
+        type: 'object',
+      },
+      url: 'https://example.com',
+    });
+  });
+
+  it('requires a schema when instructions are provided', () => {
+    expect(() =>
+      buildFetchParams('https://example.com', {
+        instructions: 'Extract the page title',
+      }),
+    ).toThrow('--instructions requires --schema-file or --schema');
+  });
 });
 
 describe('buildFetchTaskRequest', () => {
