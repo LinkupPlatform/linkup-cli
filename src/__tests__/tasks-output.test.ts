@@ -80,6 +80,18 @@ describe('formatTask', () => {
     expect(lines).toContain('# Title');
   });
 
+  it('renders structured data from a completed fetch task', () => {
+    const lines = formatTask(
+      fetchTask({
+        output: { data: { title: 'Example' }, markdown: '# Title' },
+        status: 'completed',
+      }),
+    );
+
+    expect(lines).toContain('Data:');
+    expect(lines).toContain('{\n  "title": "Example"\n}');
+  });
+
   it('prints the error message when failed', () => {
     const lines = formatTask(searchTask({ error: 'rate limited', status: 'failed' }));
 

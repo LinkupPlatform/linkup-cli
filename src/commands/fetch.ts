@@ -5,6 +5,7 @@ import { exitWithError, formatErrorLine } from '../output/errors.js';
 import { formatFetch } from '../output/fetch.js';
 import { formatTaskErrorLine } from '../output/task-errors.js';
 import { createPollIntervalOption, createTimeoutOption, runTaskFlow } from './async-task.js';
+import { hasStructuredSchemaOption, loadStructuredSchema } from './shared-params.js';
 
 type FetchCommandOptions = {
   mode?: FetchMode;
@@ -12,6 +13,9 @@ type FetchCommandOptions = {
   includeRawContent?: boolean;
   includeRawHtml?: boolean;
   extractImages?: boolean;
+  schemaFile?: string;
+  schema?: string;
+  instructions?: string;
   async?: boolean;
   wait?: boolean;
   pollInterval?: number;
@@ -28,13 +32,26 @@ function parseFetchUrl(value: string): string {
 }
 
 export function buildFetchParams(url: string, options: FetchCommandOptions): FetchParams {
-  return {
+  const baseParams = {
     url,
     ...(options.mode && { mode: options.mode }),
     ...(options.renderJs && { renderJs: true }),
     ...(options.includeRawContent && { includeRawContent: true }),
     ...(options.includeRawHtml && { includeRawHtml: true }),
     ...(options.extractImages && { extractImages: true }),
+  };
+
+  if (!hasStructuredSchemaOption(options)) {
+    if (options.instructions) {
+      throw new Error('--instructions requires --schema-file or --schema');
+    }
+    return baseParams;
+  }
+
+  return {
+    ...baseParams,
+    schema: loadStructuredSchema(options),
+    ...(options.instructions && { instructions: options.instructions }),
   };
 }
 
@@ -82,6 +99,9 @@ export function registerFetchCommand(program: Command): void {
     .option('--include-raw-content', 'Include the raw page content in the response output')
     .option('--include-raw-html', 'Include legacy raw HTML in the response output')
     .option('--extract-images', 'Extract image metadata from the fetched page')
+    .option('--schema-file <path>', 'Path to a JSON schema file for structured extraction')
+    .option('--schema <json>', 'Inline JSON schema for structured extraction')
+    .option('--instructions <text>', 'Instructions for structured extraction (requires a schema)')
     .option('--async', 'Run the fetch as an asynchronous task')
     .option('-w, --wait', 'Wait for the asynchronous task to complete and print the result')
     .addOption(createPollIntervalOption())
@@ -94,6 +114,7 @@ Examples:
   linkup fetch https://example.com --mode pro
   linkup fetch https://example.com --render-js
   linkup fetch https://example.com --include-raw-content --json
+  linkup fetch https://example.com --schema-file schema.json --instructions "Extract the title"
   linkup fetch https://example.com --async --wait
 `,
     )
