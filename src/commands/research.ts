@@ -50,8 +50,6 @@ const OUTPUT_TYPE_MAP: Record<ResearchCliOutputType, ResearchOutputType> = {
   structured: 'structured',
 };
 
-const DEFAULT_REASONING_DEPTH: ResearchReasoningDepth = 'L';
-
 type ResearchCliOptions = {
   outputType: ResearchOutputType;
   outputTypeExplicit?: boolean;
@@ -290,9 +288,7 @@ export function registerResearchCommand(program: Command): void {
   const reasoningOption = new Option(
     '--reasoning-depth <depth>',
     'Reasoning depth within the selected mode',
-  )
-    .choices(REASONING_DEPTH_CHOICES)
-    .default(DEFAULT_REASONING_DEPTH);
+  ).choices(REASONING_DEPTH_CHOICES);
 
   const research = program
     .command('research')

@@ -51,7 +51,6 @@ describe('research command integration', () => {
     expect(fakeClient.research).toHaveBeenCalledWith({
       outputType: 'structured',
       query: 'market outlook',
-      reasoningDepth: 'L',
       structuredOutputSchema: { type: 'object' },
     });
     expect(fakeClient.getResearch).toHaveBeenCalledWith('research-1');
