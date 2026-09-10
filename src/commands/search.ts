@@ -41,7 +41,7 @@ type BuildSearchParamsResult = {
   warnings: string[];
 };
 
-const DEPTH_CHOICES: SearchDepth[] = ['fast', 'standard', 'deep'];
+const DEPTH_CHOICES: SearchDepth[] = ['flash', 'fast', 'standard', 'deep'];
 const OUTPUT_CHOICES: SearchCliOutputType[] = ['sourced-answer', 'search-results', 'structured'];
 
 const OUTPUT_TYPE_MAP: Record<SearchCliOutputType, SearchOutputType> = {

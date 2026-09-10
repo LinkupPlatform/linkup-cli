@@ -4,7 +4,7 @@ Official command-line interface for [Linkup](https://linkup.so) — AI-powered w
 
 ## Features
 
-- **Search the web** with three depth modes: `fast`, `standard`, and `deep`.
+- **Search the web** with four depth modes: `flash`, `fast`, `standard`, and `deep`.
 - **Fetch** any URL as clean markdown.
 - **Research** asynchronously, and batch mixed jobs with **tasks**.
 - **Scriptable**: `--json` output for any command, plus stdin and file input.
@@ -50,7 +50,7 @@ These commands run immediately and return the result in the same call.
 
 Run an immediate web search.
 
-- Pick the effort with `--depth`: `fast`, `standard` (default), or `deep`.
+- Pick the effort with `--depth`: `flash`, `fast`, `standard` (default), or `deep`.
 - Choose the output with `--output`: `sourced-answer`, `search-results`, or `structured`.
 - Use `--include-images` and `--max-results` with any output type.
 - Add `--include-inline-citations` to sourced answers or `--include-sources` to structured output.

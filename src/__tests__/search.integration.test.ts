@@ -20,7 +20,7 @@ describe('search command integration', () => {
       'search',
       'hello world',
       '--depth',
-      'deep',
+      'flash',
       '--include-images',
       '--include-inline-citations',
       '--max-results',
@@ -28,7 +28,7 @@ describe('search command integration', () => {
     ]);
 
     expect(fakeClient.search).toHaveBeenCalledWith({
-      depth: 'deep',
+      depth: 'flash',
       includeImages: true,
       includeInlineCitations: true,
       maxResults: 8,
