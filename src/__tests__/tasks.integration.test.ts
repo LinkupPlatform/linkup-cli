@@ -17,18 +17,18 @@ describe('tasks command integration', () => {
     writeFileSync(
       taskFile,
       JSON.stringify({
-        input: { outputType: 'sourcedAnswer', query: 'hello' },
+        input: { depth: 'standard', outputType: 'sourcedAnswer', query: 'hello' },
         type: 'search',
       }),
     );
 
     const fakeClient = createFakeClient();
     fakeClient.createTasks.mockResolvedValue([
-      makeTask({ input: { outputType: 'sourcedAnswer', query: 'hello' } }),
+      makeTask({ input: { depth: 'standard', outputType: 'sourcedAnswer', query: 'hello' } }),
     ]);
     fakeClient.getTask.mockResolvedValue(
       makeTask({
-        input: { outputType: 'sourcedAnswer', query: 'hello' },
+        input: { depth: 'standard', outputType: 'sourcedAnswer', query: 'hello' },
         output: { answer: 'done', sources: [] },
         status: 'completed',
         updatedAt: '2026-01-01T00:00:01.000Z',
@@ -40,7 +40,7 @@ describe('tasks command integration', () => {
 
     expect(fakeClient.createTasks).toHaveBeenCalledWith([
       {
-        input: { outputType: 'sourcedAnswer', query: 'hello' },
+        input: { depth: 'standard', outputType: 'sourcedAnswer', query: 'hello' },
         type: 'search',
       },
     ]);
@@ -51,8 +51,16 @@ describe('tasks command integration', () => {
   it('creates multiple tasks and waits for all concurrently', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'linkup-tasks-integration-'));
     const taskFile = join(dir, 'tasks.json');
-    const firstInput = { outputType: 'sourcedAnswer', query: 'first' } as const;
-    const secondInput = { outputType: 'sourcedAnswer', query: 'second' } as const;
+    const firstInput = {
+      depth: 'standard',
+      outputType: 'sourcedAnswer',
+      query: 'first',
+    } as const;
+    const secondInput = {
+      depth: 'standard',
+      outputType: 'sourcedAnswer',
+      query: 'second',
+    } as const;
     writeFileSync(
       taskFile,
       JSON.stringify([

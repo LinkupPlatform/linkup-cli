@@ -10,11 +10,16 @@ describe('parseTaskRequests', () => {
     expect(
       parseTaskRequests(
         JSON.stringify({
-          input: { outputType: 'sourcedAnswer', query: 'q' },
+          input: { depth: 'standard', outputType: 'sourcedAnswer', query: 'q' },
           type: 'search',
         }),
       ),
-    ).toEqual([{ input: { outputType: 'sourcedAnswer', query: 'q' }, type: 'search' }]);
+    ).toEqual([
+      {
+        input: { depth: 'standard', outputType: 'sourcedAnswer', query: 'q' },
+        type: 'search',
+      },
+    ]);
   });
 
   it('accepts an array of task requests', () => {
@@ -48,6 +53,39 @@ describe('parseTaskRequests', () => {
 
   it('rejects requests without an input object', () => {
     expect(() => parseTaskRequests(JSON.stringify({ type: 'search' }))).toThrow('input object');
+  });
+
+  it('rejects search requests missing required sdk fields', () => {
+    expect(() =>
+      parseTaskRequests(
+        JSON.stringify({
+          input: { outputType: 'sourcedAnswer', query: 'q' },
+          type: 'search',
+        }),
+      ),
+    ).toThrow('search task input must include a non-empty "depth" string');
+  });
+
+  it('rejects structured requests without a schema', () => {
+    expect(() =>
+      parseTaskRequests(
+        JSON.stringify({
+          input: { outputType: 'structured', query: 'q' },
+          type: 'research',
+        }),
+      ),
+    ).toThrow('structuredOutputSchema');
+  });
+
+  it('rejects fetch instructions without a schema', () => {
+    expect(() =>
+      parseTaskRequests(
+        JSON.stringify({
+          input: { instructions: 'Extract the title', url: 'https://example.com' },
+          type: 'fetch',
+        }),
+      ),
+    ).toThrow('fetch task input with "instructions" must include "schema"');
   });
 });
 

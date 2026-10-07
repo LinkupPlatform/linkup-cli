@@ -35,6 +35,9 @@ import { buildPaginationSortParams } from './shared-params.js';
 
 const TASK_STATUS_CHOICES: TaskStatus[] = ['pending', 'processing', 'completed', 'failed'];
 const TASK_TYPE_CHOICES: TaskType[] = ['search', 'fetch', 'research'];
+const SEARCH_DEPTH_CHOICES = ['flash', 'fast', 'standard', 'deep'] as const;
+const SEARCH_OUTPUT_CHOICES = ['searchResults', 'sourcedAnswer', 'structured'] as const;
+const RESEARCH_OUTPUT_CHOICES = ['sourcedAnswer', 'structured'] as const;
 
 type TaskCreateCommandOptions = {
   file?: string;
@@ -92,6 +95,57 @@ export function parseTaskTypeList(value: string): TaskType[] {
   return parseChoiceList(value, TASK_TYPE_CHOICES, 'type');
 }
 
+function assertStringField(input: Record<string, unknown>, field: string, type: TaskType): void {
+  if (typeof input[field] !== 'string' || input[field].length === 0) {
+    throw new Error(`${type} task input must include a non-empty "${field}" string`);
+  }
+}
+
+function assertChoiceField(
+  input: Record<string, unknown>,
+  field: string,
+  choices: readonly string[],
+  type: TaskType,
+): void {
+  assertStringField(input, field, type);
+  if (!choices.includes(input[field] as string)) {
+    throw new Error(`${type} task input has an invalid "${field}"`);
+  }
+}
+
+function assertStructuredSchema(input: Record<string, unknown>, type: TaskType): void {
+  if (input.structuredOutputSchema === undefined) {
+    throw new Error(
+      `${type} task input with structured output must include "structuredOutputSchema"`,
+    );
+  }
+}
+
+function validateTaskInput(type: TaskType, input: Record<string, unknown>): void {
+  switch (type) {
+    case 'search':
+      assertStringField(input, 'query', type);
+      assertChoiceField(input, 'depth', SEARCH_DEPTH_CHOICES, type);
+      assertChoiceField(input, 'outputType', SEARCH_OUTPUT_CHOICES, type);
+      if (input.outputType === 'structured') {
+        assertStructuredSchema(input, type);
+      }
+      return;
+    case 'fetch':
+      assertStringField(input, 'url', type);
+      if (input.instructions !== undefined && input.schema === undefined) {
+        throw new Error('fetch task input with "instructions" must include "schema"');
+      }
+      return;
+    case 'research':
+      assertStringField(input, 'query', type);
+      assertChoiceField(input, 'outputType', RESEARCH_OUTPUT_CHOICES, type);
+      if (input.outputType === 'structured') {
+        assertStructuredSchema(input, type);
+      }
+  }
+}
+
 export function parseTaskRequests(raw: string): TaskRequest[] {
   let parsed: unknown;
   try {
@@ -116,6 +170,7 @@ export function parseTaskRequests(raw: string): TaskRequest[] {
     if (!isRecord(request.input)) {
       throw new Error('Each task request must include an input object');
     }
+    validateTaskInput(request.type as TaskType, request.input);
   }
 
   return requests as TaskRequest[];
