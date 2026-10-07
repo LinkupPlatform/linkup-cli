@@ -5,7 +5,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     createdAt: '2026-01-01T00:00:00.000Z',
     error: null,
     id: 'task-1',
-    input: { outputType: 'sourcedAnswer', query: 'hello' },
+    input: { depth: 'standard', outputType: 'sourcedAnswer', query: 'hello' },
     output: null,
     status: 'pending',
     type: 'search',

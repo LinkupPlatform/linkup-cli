@@ -96,7 +96,7 @@ linkup research list                 # recent tasks
 
 #### Tasks
 
-Generic async API for batching and managing `search`, `fetch`, and `research` work. Create tasks from a JSON file or stdin (one object or an array, using camelCase fields):
+Generic async API for batching and managing `search`, `fetch`, and `research` work. Create tasks from a JSON file or stdin (one object or an array, using camelCase fields). Each `input` must include the required fields for its SDK request type, such as `depth` for search tasks:
 
 ```bash
 linkup tasks create --file tasks.json
