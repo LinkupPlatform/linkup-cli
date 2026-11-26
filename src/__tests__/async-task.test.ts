@@ -71,6 +71,56 @@ describe('pollTask', () => {
     expect(result.status).toBe('timeout');
     expect(result.task.status).toBe('pending');
   });
+
+  it('caps the sleep at the deadline without requesting another status', async () => {
+    const pending = makePollTask('pending');
+    const getTask = vi
+      .fn()
+      .mockResolvedValueOnce(pending)
+      .mockResolvedValue(makePollTask('completed'));
+    let clock = 0;
+    const sleep = vi.fn((ms: number) => {
+      clock += ms;
+      return Promise.resolve();
+    });
+
+    const result = await pollTask({
+      getTask,
+      id: pending.id,
+      intervalMs: 5000,
+      now: () => clock,
+      sleep,
+      timeoutMs: 1000,
+    });
+
+    expect(result).toEqual({ status: 'timeout', task: pending });
+    expect(sleep).toHaveBeenCalledExactlyOnceWith(1000);
+    expect(getTask).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send a new status request if the timer wakes late', async () => {
+    const pending = makePollTask('pending');
+    const getTask = vi
+      .fn()
+      .mockResolvedValueOnce(pending)
+      .mockResolvedValue(makePollTask('completed'));
+    let clock = 0;
+
+    const result = await pollTask({
+      getTask,
+      id: pending.id,
+      intervalMs: 500,
+      now: () => clock,
+      sleep: () => {
+        clock = 1100;
+        return Promise.resolve();
+      },
+      timeoutMs: 1000,
+    });
+
+    expect(result).toEqual({ status: 'timeout', task: pending });
+    expect(getTask).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('runTaskFlow', () => {

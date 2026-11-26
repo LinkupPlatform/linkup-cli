@@ -111,7 +111,7 @@ For single `search` or `fetch` calls, add `--async` to enqueue them as tasks.
 Add `--wait` to any asynchronous command to poll until the task completes and print the result, instead of returning a task id immediately.
 
 - Use `--poll-interval` to set the delay between checks (default: 5 seconds).
-- Use `--timeout` to set the maximum wait time (default: 20 minutes).
+- Use `--timeout` to set the polling budget (default: 20 minutes). A status request already in progress can finish after the deadline.
 - If the wait times out, the CLI prints a command you can run later to resume waiting.
 
 ```bash
