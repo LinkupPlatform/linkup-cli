@@ -66,7 +66,7 @@ export function createPollIntervalOption(): Option {
 }
 
 export function createTimeoutOption(): Option {
-  return new Option('--timeout <seconds>', 'Maximum seconds to wait before giving up')
+  return new Option('--timeout <seconds>', 'Polling budget in seconds')
     .default(DEFAULT_TIMEOUT_SECONDS, `${DEFAULT_TIMEOUT_SECONDS} (20 minutes)`)
     .argParser((value: string) => parsePositiveInt(value));
 }
@@ -82,26 +82,32 @@ export function printTimeoutHint(kind: 'task' | 'research', id: string): void {
   console.error(`  linkup tasks get ${id} --wait`);
 }
 
-// Poll a task until it reaches a terminal state or the timeout elapses.
+// Stop scheduling polls at the deadline. The SDK does not expose cancellation for an ongoing request.
 // Timers and clock are injectable so the loop can be unit-tested without real delays.
 export async function pollTask<TTask extends PollableTask>(
   options: PollTaskOptions<TTask>,
 ): Promise<PollTaskResult<TTask>> {
   const sleep = options.sleep ?? defaultSleep;
-  const now = options.now ?? Date.now;
-  const start = now();
+  const now = options.now ?? (() => performance.now());
+  const deadline = now() + options.timeoutMs;
 
   let task = await options.getTask(options.id);
 
-  while (task.status !== 'completed' && task.status !== 'failed') {
-    if (now() - start >= options.timeoutMs) {
-      return { status: 'timeout', task };
+  while (true) {
+    if (task.status === 'completed' || task.status === 'failed') {
+      return { status: task.status, task };
     }
-    await sleep(options.intervalMs);
+
+    const remainingMs = deadline - now();
+    if (remainingMs <= 0) break;
+
+    await sleep(Math.min(options.intervalMs, remainingMs));
+    if (now() >= deadline) break;
+
     task = await options.getTask(options.id);
   }
 
-  return { status: task.status as 'completed' | 'failed', task };
+  return { status: 'timeout', task };
 }
 
 export async function waitForTask<TTask extends PollableTask>(
